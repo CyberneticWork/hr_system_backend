@@ -40,6 +40,9 @@ Laravel is accessible, powerful, and provides tools required for large, robust a
     ```bash
     cp .env.example .env
     php artisan key:generate
+
+    # Optional: If there any storage related errors
+    php artisan storage:link
     ```
 
 4. Configure your database settings in `.env` file
