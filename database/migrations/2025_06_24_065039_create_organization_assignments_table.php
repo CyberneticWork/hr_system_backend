@@ -1,0 +1,52 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration {
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('organization_assignments', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('employee_id')->constrained('employees')->onDelete('cascade');
+            $table->string('company');
+            $table->string('current_supervisor')->nullable();
+            $table->date('date_of_joining')->nullable();
+            $table->string('department')->nullable();
+            $table->string('sub_department')->nullable();
+            $table->string('designation')->nullable();
+            $table->enum('day_off', ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'])->nullable();
+            $table->date('confirmation_date')->nullable();
+
+            $table->boolean('probationary_period')->default(false);
+            $table->boolean('training_period')->default(false);
+            $table->boolean('contract_period')->default(false);
+
+            $table->date('probationary_period_from')->nullable();
+            $table->date('probationary_period_to')->nullable();
+            $table->date('training_period_from')->nullable();
+            $table->date('training_period_to')->nullable();
+            $table->date('contract_period_from')->nullable();
+            $table->date('contract_period_to')->nullable();
+
+            $table->date('date_of_resigning')->nullable();
+            $table->text('resigned_reason')->nullable();
+            $table->boolean('is_active')->default(true);
+            $table->string('letter_path')->nullable();
+
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('organization_assignments');
+    }
+};
