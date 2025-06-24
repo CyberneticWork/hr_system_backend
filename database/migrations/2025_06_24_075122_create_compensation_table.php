@@ -16,11 +16,11 @@ return new class extends Migration {
             $table->decimal('basic_salary', 10, 2);
             $table->string('increment_value')->nullable();
             $table->date('increment_effected_date')->nullable();
+
             $table->boolean('enable_epf_etf')->nullable()->default(false);
             $table->boolean('ot_active')->nullable()->default(false);
             $table->boolean('early_deduction')->nullable()->default(false);
             $table->boolean('increment_active')->nullable()->default(false);
-            $table->boolean('active_nopay')->nullable()->default(false);
             $table->boolean('active_nopay')->nullable()->default(false);
             $table->boolean('ot_morning')->nullable()->default(false);
             $table->boolean('ot_evening')->nullable()->default(false);
