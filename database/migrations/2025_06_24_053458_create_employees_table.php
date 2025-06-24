@@ -24,9 +24,12 @@ return new class extends Migration {
             $table->string('display_name')->nullable();
 
             $table->boolean('is_active');
-            $table->enum('employment_type', ['permanent', 'contract', 'temporary']);
+
+            $table->foreignId('employment_type_id')->constrained('employment_types')->onDelete('cascade');
 
             $table->boolean('marital_status')->nullable()->default(false);
+
+            $table->foreignId('spouse_id')->constrained('spouses')->onDelete('cascade');
 
             $table->string('religion')->nullable();
             $table->string('country_of_birth')->nullable();
