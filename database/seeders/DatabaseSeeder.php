@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\employment_type;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -20,5 +21,25 @@ class DatabaseSeeder extends Seeder
             'email' => 'isuru@mail.com',
             'password' => '123456789',
         ]);
+
+        employment_type::insert([
+            [
+                'id' => 1,
+                'name' => 'Permanent Basis',
+            ],
+            [
+                'id' => 2,
+                'name' => 'Training',
+            ],
+            [
+                'id' => 3,
+                'name' => 'Contract Basis',
+            ],
+            [
+                'id' => 4,
+                'name' => 'Daily Wages Salary',
+            ],
+        ]);
+
     }
 }
