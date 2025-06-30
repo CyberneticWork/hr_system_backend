@@ -12,12 +12,14 @@ return new class extends Migration {
     {
         Schema::create('organization_assignments', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('employee_id')->constrained('employees')->onDelete('cascade');
+
             $table->string('company');
             $table->string('current_supervisor')->nullable();
             $table->date('date_of_joining')->nullable();
-            $table->string('department')->nullable();
-            $table->string('sub_department')->nullable();
+
+            $table->foreignId('department_id')->nullable()->constrained('departments')->onDelete('set null');
+            $table->foreignId('sub_department_id')->nullable()->constrained('sub_departments')->onDelete('set null');
+
             $table->string('designation')->nullable();
             $table->enum('day_off', ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'])->nullable();
             $table->date('confirmation_date')->nullable();
