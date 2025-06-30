@@ -20,6 +20,7 @@ return new class extends Migration {
             $table->foreignId('department_id')->nullable()->constrained('departments')->onDelete('set null');
             $table->foreignId('sub_department_id')->nullable()->constrained('sub_departments')->onDelete('set null');
 
+            // to do list. if designation not good add enum
             $table->string('designation')->nullable();
             $table->enum('day_off', ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'])->nullable();
             $table->date('confirmation_date')->nullable();

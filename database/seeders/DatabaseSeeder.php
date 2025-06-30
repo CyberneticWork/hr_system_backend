@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\allowances;
 use App\Models\departments;
 use App\Models\employment_type;
+use App\Models\pay_deductions;
 use App\Models\shifts;
 use App\Models\sub_departments;
 use App\Models\User;
@@ -128,6 +129,29 @@ class DatabaseSeeder extends Seeder
                 'allowance_name' => $name,
             ]);
         }
+
+        pay_deductions::insert([
+            [
+                'pay_deduction_code' => '001',
+                'pay_deduction_name' => 'Salary Advance',
+                'pay_deduction_amount' => 0.00,
+            ],
+            [
+                'pay_deduction_code' => '002',
+                'pay_deduction_name' => 'Meal Deduction',
+                'pay_deduction_amount' => 0.00,
+            ],
+            [
+                'pay_deduction_code' => '003',
+                'pay_deduction_name' => 'Other Deduction',
+                'pay_deduction_amount' => 0.00,
+            ],
+            [
+                'pay_deduction_code' => '004',
+                'pay_deduction_name' => 'Bond Deduction',
+                'pay_deduction_amount' => 0.00,
+            ],
+        ]);
 
     }
 }
