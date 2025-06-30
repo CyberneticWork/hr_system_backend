@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\allowances;
 use App\Models\departments;
 use App\Models\employment_type;
 use App\Models\shifts;
@@ -109,6 +110,22 @@ class DatabaseSeeder extends Seeder
                 'late_deduction' => $shift[6],
                 'midnight_roster' => $shift[7],
                 'nopay_hour_halfday' => $shift[8],
+            ]);
+        }
+
+        $allowances = [
+            ['001', 'Traveling Allowance'],
+            ['002', 'Special Allowance'],
+            ['003', 'Attendance Allowance'],
+            ['004', 'Production Incentive'],
+            ['005', 'Medical Reimbursement'],
+            ['006', 'Other Reimbursement'],
+        ];
+
+        foreach ($allowances as [$code, $name]) {
+            allowances::create([
+                'allowance_code' => $code,
+                'allowance_name' => $name,
             ]);
         }
 
