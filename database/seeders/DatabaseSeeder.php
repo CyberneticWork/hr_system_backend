@@ -6,6 +6,7 @@ use App\Models\allowances;
 use App\Models\departments;
 use App\Models\employment_type;
 use App\Models\pay_deductions;
+use App\Models\roles;
 use App\Models\shifts;
 use App\Models\sub_departments;
 use App\Models\User;
@@ -20,11 +21,21 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // User::factory(10)->create();
+        $roles = [
+            'admin',
+            'employee',
+            'user',
+        ];
+
+        foreach ($roles as $role) {
+            roles::create(['name' => $role]);
+        }
 
         User::factory()->create([
             'name' => 'Isuru Bandara',
             'email' => 'isuru@mail.com',
             'password' => '123456789',
+            'role_id' => 1,
         ]);
 
         employment_type::insert([
@@ -45,6 +56,8 @@ class DatabaseSeeder extends Seeder
                 'name' => 'Daily Wages Salary',
             ],
         ]);
+
+
 
         $departments = [
             'IT',
