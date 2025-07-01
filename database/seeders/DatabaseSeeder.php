@@ -21,16 +21,6 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // User::factory(10)->create();
-        $roles = [
-            'admin',
-            'employee',
-            'user',
-        ];
-
-        foreach ($roles as $role) {
-            roles::create(['name' => $role]);
-        }
-
         User::factory()->create([
             'name' => 'Isuru Bandara',
             'email' => 'isuru@mail.com',
