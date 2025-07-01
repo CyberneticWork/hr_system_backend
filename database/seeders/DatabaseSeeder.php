@@ -25,7 +25,7 @@ class DatabaseSeeder extends Seeder
             'name' => 'Isuru Bandara',
             'email' => 'isuru@mail.com',
             'password' => '123456789',
-            'role_id' => 1,
+            'role' => 'admin',
         ]);
 
         employment_type::insert([
