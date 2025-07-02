@@ -18,6 +18,9 @@ return new class extends Migration {
 
             $table->softDeletes();
             $table->timestamps();
+
+            $table->index('pay_deduction_code');
+            $table->index('pay_deduction_name');
         });
     }
 

@@ -12,7 +12,7 @@ return new class extends Migration {
     {
         Schema::create('loans', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('employee_id'); // Foreign key
+            $table->foreignId('employee_id')->constrained('employees')->onDelete('cascade');
             $table->decimal('loan_amount', 10, 2);
             $table->decimal('interest_rate_per_annum', 5, 2)->default(0);
             $table->decimal('installment_amount', 10, 2);
@@ -22,8 +22,7 @@ return new class extends Migration {
             $table->softDeletes();
             $table->timestamps();
 
-            // Foreign key constraint
-            $table->foreign('employee_id')->references('id')->on('employees')->onDelete('cascade');
+            $table->index('employee_id');
         });
     }
 

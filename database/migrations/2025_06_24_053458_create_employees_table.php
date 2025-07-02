@@ -23,14 +23,14 @@ return new class extends Migration {
             $table->string('full_name');
             $table->string('display_name')->nullable();
 
-            $table->boolean('is_active');
+             $table->boolean('is_active')->default(true);
 
             $table->foreignId('employment_type_id')->constrained('employment_types')->onDelete('cascade');
 
             $table->foreignId('organization_assignment_id')->constrained('organization_assignments')->onDelete('cascade');
             $table->enum('marital_status', ['single', 'married', 'divorced', 'widowed'])->nullable();
 
-            $table->foreignId('spouse_id')->constrained('spouses')->onDelete('cascade');
+            $table->foreignId('spouse_id')->nullable()->constrained('spouses')->onDelete('cascade');
 
             $table->string('religion')->nullable();
             $table->string('country_of_birth')->nullable();
@@ -38,6 +38,10 @@ return new class extends Migration {
             $table->softDeletes();
 
             $table->timestamps();
+
+            $table->index('nic');
+            $table->index('epf');
+            $table->index('attendance_employee_no');
         });
     }
 

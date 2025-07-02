@@ -42,8 +42,12 @@ return new class extends Migration {
             $table->string('letter_path')->nullable();
 
             $table->softDeletes();
-
             $table->timestamps();
+
+            $table->index('company_id');
+            $table->index('department_id');
+            $table->index('sub_department_id');
+
         });
     }
 

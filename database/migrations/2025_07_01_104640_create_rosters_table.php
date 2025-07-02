@@ -20,6 +20,10 @@ return new class extends Migration
 
             $table->softDeletes();
             $table->timestamps();
+
+            $table->index('shift_code');
+            $table->index('employee_id');
+
         });
     }
 

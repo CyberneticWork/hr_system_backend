@@ -27,6 +27,14 @@ return new class extends Migration {
 
             $table->softDeletes();
             $table->timestamps();
+
+
+            $table->index('shift_code');
+            $table->index('start_time');
+            $table->index('end_time');
+            $table->index('morning_ot_start');
+            $table->index('special_ot_start');
+            $table->index('late_deduction');
         });
     }
 

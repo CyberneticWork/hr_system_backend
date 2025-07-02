@@ -17,6 +17,9 @@ return new class extends Migration {
 
             $table->softDeletes();
             $table->timestamps();
+
+            $table->index('allowance_code');
+            $table->index('allowance_name');
         });
     }
 

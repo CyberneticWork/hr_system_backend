@@ -12,7 +12,7 @@ return new class extends Migration {
     {
         Schema::create('leave_masters', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('employee_id');
+            $table->foreignId('employee_id')->constrained('employees')->onDelete('cascade');
 
             $table->string('attendance_no')->nullable();
             $table->string('epf_no')->nullable();
@@ -34,8 +34,10 @@ return new class extends Migration {
             $table->softDeletes();
             $table->timestamps();
 
-            // Foreign key constraint
-            $table->foreign('employee_id')->references('id')->on('employees')->onDelete('cascade');
+            $table->index('employee_id');
+            $table->index('attendance_no');
+            $table->index('epf_no');
+
         });
     }
 
