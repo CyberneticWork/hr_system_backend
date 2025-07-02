@@ -15,6 +15,8 @@ return new class extends Migration {
             $table->string('pay_deduction_code')->unique();
             $table->string('pay_deduction_name');
             $table->decimal('pay_deduction_amount', 10, 2)->default(0);
+
+            $table->boolean('is_deleted')->default(false);
             $table->timestamps();
         });
     }

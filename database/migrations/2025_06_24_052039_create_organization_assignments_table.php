@@ -13,7 +13,7 @@ return new class extends Migration {
         Schema::create('organization_assignments', function (Blueprint $table) {
             $table->id();
 
-            $table->string('company');
+            $table->foreignId('company_id')->nullable()->constrained('companies')->onDelete('set null');
             $table->string('current_supervisor')->nullable();
             $table->date('date_of_joining')->nullable();
 
@@ -40,6 +40,8 @@ return new class extends Migration {
             $table->text('resigned_reason')->nullable();
             $table->boolean('is_active')->default(true);
             $table->string('letter_path')->nullable();
+
+            $table->boolean('is_deleted')->default(false);
 
             $table->timestamps();
         });

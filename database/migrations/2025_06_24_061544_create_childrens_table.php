@@ -17,6 +17,8 @@ return new class extends Migration {
             $table->integer('age');
             $table->date('dob');
             $table->string('nic')->unique()->nullable();
+
+            $table->boolean('is_deleted')->default(false);
             $table->timestamps();
         });
     }

@@ -17,6 +17,8 @@ return new class extends Migration
             $table->foreignId('employee_id')->constrained('employees')->onDelete('cascade');
             $table->date('date_from')->nullable();
             $table->date('date_to')->nullable();
+
+            $table->boolean('is_deleted')->default(false);
             $table->timestamps();
         });
     }

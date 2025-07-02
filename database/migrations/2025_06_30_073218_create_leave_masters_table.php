@@ -31,6 +31,7 @@ return new class extends Migration {
             $table->date('cancel_to')->nullable();
             $table->text('reason')->nullable();
 
+            $table->boolean('is_deleted')->default(false);
             $table->timestamps();
 
             // Foreign key constraint

@@ -18,6 +18,8 @@ return new class extends Migration {
             $table->decimal('installment_amount', 10, 2);
             $table->date('start_from');
             $table->boolean('with_interest')->default(false);
+
+            $table->boolean('is_deleted')->default(false);
             $table->timestamps();
 
             // Foreign key constraint
