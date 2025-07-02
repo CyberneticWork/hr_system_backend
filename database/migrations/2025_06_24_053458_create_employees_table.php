@@ -27,9 +27,8 @@ return new class extends Migration {
 
             $table->foreignId('employment_type_id')->constrained('employment_types')->onDelete('cascade');
 
-            $table->foreignId('organization_assignments_id')->constrained('organization_assignments')->onDelete('cascade');
-
-            $table->boolean('marital_status')->nullable()->default(false);
+            $table->foreignId('organization_assignment_id')->constrained('organization_assignments')->onDelete('cascade');
+            $table->enum('marital_status', ['single', 'married', 'divorced', 'widowed'])->nullable();
 
             $table->foreignId('spouse_id')->constrained('spouses')->onDelete('cascade');
 
