@@ -38,7 +38,7 @@ return new class extends Migration {
             $table->boolean('secondary_emp')->nullable()->default(false);
             $table->boolean('primary_emp_basic')->nullable()->default(false);
 
-            $table->boolean('is_deleted')->default(false);
+            $table->softDeletes();
             $table->timestamps();
         });
     }

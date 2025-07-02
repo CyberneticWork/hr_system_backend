@@ -41,7 +41,7 @@ return new class extends Migration {
             $table->boolean('is_active')->default(true);
             $table->string('letter_path')->nullable();
 
-            $table->boolean('is_deleted')->default(false);
+            $table->softDeletes();
 
             $table->timestamps();
         });

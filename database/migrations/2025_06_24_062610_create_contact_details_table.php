@@ -29,7 +29,7 @@ return new class extends Migration
             $table->string('emg_address');
             $table->string('emg_tel');
 
-            $table->boolean('is_deleted')->default(false);
+            $table->softDeletes();
             $table->timestamps();
         });
     }

@@ -18,7 +18,7 @@ return new class extends Migration {
             $table->date('dob');
             $table->string('nic')->unique()->nullable();
 
-            $table->boolean('is_deleted')->default(false);
+            $table->softDeletes();
             $table->timestamps();
         });
     }

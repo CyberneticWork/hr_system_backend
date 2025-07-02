@@ -19,7 +19,7 @@ return new class extends Migration {
             $table->date('start_from');
             $table->boolean('with_interest')->default(false);
 
-            $table->boolean('is_deleted')->default(false);
+            $table->softDeletes();
             $table->timestamps();
 
             // Foreign key constraint

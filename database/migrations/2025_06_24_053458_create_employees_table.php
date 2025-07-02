@@ -36,7 +36,7 @@ return new class extends Migration {
             $table->string('religion')->nullable();
             $table->string('country_of_birth')->nullable();
 
-            $table->boolean('is_deleted')->default(false);
+            $table->softDeletes();
 
             $table->timestamps();
         });

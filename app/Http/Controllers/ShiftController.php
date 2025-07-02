@@ -2,18 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\shifts;
 use Illuminate\Http\Request;
 
-class EmployeeController extends Controller
+class ShiftController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        //
+        $shifts = shifts::all();
+        return response()->json($shifts);
     }
-
 
     /**
      * Store a newly created resource in storage.
@@ -28,15 +29,11 @@ class EmployeeController extends Controller
      */
     public function show(string $id)
     {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
+        $shifts = shifts::find($id);
+        if (!$shifts) {
+            return response()->json(['message' => 'Shift not found'], 404);
+        }
+        return response()->json($shifts);
     }
 
     /**

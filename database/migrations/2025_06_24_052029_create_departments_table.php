@@ -14,7 +14,7 @@ return new class extends Migration {
             $table->id();
             $table->string('name')->unique();
 
-            $table->boolean('is_deleted')->default(false);
+            $table->softDeletes();
             $table->timestamps();
         });
     }

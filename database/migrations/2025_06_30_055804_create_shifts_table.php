@@ -25,7 +25,7 @@ return new class extends Migration {
             $table->boolean('midnight_roster')->default(false);
             $table->decimal('nopay_hour_halfday', 4, 2)->nullable();
 
-            $table->boolean('is_deleted')->default(false);
+            $table->softDeletes();
             $table->timestamps();
         });
     }

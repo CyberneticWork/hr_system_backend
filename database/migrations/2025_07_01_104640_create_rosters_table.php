@@ -18,7 +18,7 @@ return new class extends Migration
             $table->date('date_from')->nullable();
             $table->date('date_to')->nullable();
 
-            $table->boolean('is_deleted')->default(false);
+            $table->softDeletes();
             $table->timestamps();
         });
     }
