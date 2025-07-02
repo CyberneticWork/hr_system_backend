@@ -55,7 +55,7 @@ class UserController extends Controller
      */
     public function show(string $id)
     {
-        $user = User::find($id); // Returns null if not found
+        $user = User::find($id);
         if (!$user) {
             return response()->json(['message' => 'User not found'], 404);
         }
