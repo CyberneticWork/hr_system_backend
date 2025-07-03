@@ -8,4 +8,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class children extends Model
 {
     use SoftDeletes;
+
+    public function employee()
+    {
+        return $this->belongsTo(employee::class);
+    }
 }

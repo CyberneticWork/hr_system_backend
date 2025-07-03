@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\employee;
 use Illuminate\Http\Request;
 
 class EmployeeController extends Controller
@@ -11,7 +12,8 @@ class EmployeeController extends Controller
      */
     public function index()
     {
-        //
+        $employees = employee::with(['employmentType', 'spouse', 'childrens', 'contactDetail', 'organizationAssignment'])->get();
+        return response()->json($employees, 200);
     }
 
 
@@ -20,7 +22,7 @@ class EmployeeController extends Controller
      */
     public function store(Request $request)
     {
-        //
+
     }
 
     /**

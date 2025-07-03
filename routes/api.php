@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\EmployeeController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
@@ -26,3 +27,4 @@ Route::get('/test', [AuthController::class, 'test']);
 
 Route::apiResource('users', UserController::class);
 Route::apiResource('shifts', ShiftController::class);
+Route::apiResource('employee', EmployeeController::class);
