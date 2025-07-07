@@ -14,7 +14,7 @@ class ShiftController extends Controller
     public function index()
     {
         $shifts = shifts::all();
-        return response()->json($shifts);
+        return response()->json(['data' => $shifts]);
     }
 
     /**
@@ -71,11 +71,11 @@ class ShiftController extends Controller
      */
     public function show(string $id)
     {
-        $shifts = shifts::find($id);
-        if (!$shifts) {
+        $shift = shifts::find($id);
+        if (!$shift) {
             return response()->json(['message' => 'Shift not found'], 404);
         }
-        return response()->json($shifts);
+        return response()->json(['data' => $shift]);
     }
 
     /**
