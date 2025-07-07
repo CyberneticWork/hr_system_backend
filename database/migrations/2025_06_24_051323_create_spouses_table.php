@@ -12,6 +12,7 @@ return new class extends Migration {
     {
         Schema::create('spouses', function (Blueprint $table) {
             $table->id();
+            $table->enum('type', ['husband/wife', 'relation', 'non-relation', 'friend'])->default('husband/wife');
             $table->string('title');
             $table->string('name');
             $table->integer('age');

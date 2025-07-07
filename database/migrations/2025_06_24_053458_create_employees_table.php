@@ -32,6 +32,8 @@ return new class extends Migration {
 
             $table->foreignId('spouse_id')->nullable()->constrained('spouses')->onDelete('cascade');
 
+            $table->string('profile_photo_path', 2048)->nullable();
+
             $table->string('religion')->nullable();
             $table->string('country_of_birth')->nullable();
 
