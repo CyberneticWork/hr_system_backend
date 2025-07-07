@@ -24,10 +24,10 @@ return new class extends Migration
             $table->string('district')->nullable();
             $table->string('province')->nullable();
             $table->string('electronical_station')->nullable();
-            $table->string('emg_relationship');
-            $table->string('emg_name');
-            $table->string('emg_address');
-            $table->string('emg_tel');
+            $table->string('emg_relationship')->nullable();
+            $table->string('emg_name')->nullable();
+            $table->string('emg_address')->nullable();
+            $table->string('emg_tel')->nullable();
 
             $table->softDeletes();
             $table->timestamps();

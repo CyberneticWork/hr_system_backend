@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\contact_detail;
 use App\Models\organization_assignment;
 use App\Models\User;
 use App\Models\roles;
@@ -180,6 +181,7 @@ class DatabaseSeeder extends Seeder
 
         spouse::create([
             'id' => 1,
+            'type' => 'wife',
             'title' => 'Mrs',
             'name' => 'Tharushi Bandara',
             'nic' => '123456789102',
@@ -219,6 +221,13 @@ class DatabaseSeeder extends Seeder
                 'dob' => '2018-01-01',
                 'employee_id' => 1,
             ]
+        ]);
+
+        contact_detail::create([
+            'employee_id' => 1,
+            'permanent_address' => '123 Main St, Colombo',
+            'mobile_line' => '0712345678',
+            'email' => 'test@mil.com',
         ]);
 
 
