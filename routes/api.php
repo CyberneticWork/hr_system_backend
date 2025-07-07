@@ -27,4 +27,4 @@ Route::get('/test', [AuthController::class, 'test']);
 
 Route::apiResource('users', UserController::class);
 Route::apiResource('shifts', ShiftController::class);
-Route::apiResource('employee', EmployeeController::class);
+Route::apiResource('employees', EmployeeController::class);

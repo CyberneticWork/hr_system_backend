@@ -2,15 +2,20 @@
 
 namespace Database\Seeders;
 
-use App\Models\allowances;
-use App\Models\departments;
-use App\Models\employment_type;
-use App\Models\pay_deductions;
+use App\Models\organization_assignment;
+use App\Models\User;
 use App\Models\roles;
 use App\Models\shifts;
-use App\Models\sub_departments;
-use App\Models\User;
+use App\Models\spouse;
+use App\Models\company;
+use App\Models\children;
+use App\Models\employee;
+use App\Models\allowances;
+use App\Models\departments;
+use App\Models\pay_deductions;
+use App\Models\employment_type;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\sub_departments;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
@@ -20,8 +25,8 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-        User::factory()->create([
+
+        User::create([
             'name' => 'Isuru Bandara',
             'email' => 'isuru@mail.com',
             'password' => '123456789',
@@ -155,6 +160,67 @@ class DatabaseSeeder extends Seeder
                 'pay_deduction_amount' => 0.00,
             ],
         ]);
+
+        company::create([
+            'id' => 1,
+            'name' => 'SIBA'
+        ]);
+
+        organization_assignment::create([
+            'id' => 1,
+            'company_id' => 1,
+            'current_supervisor' => 1,
+            'date_of_joining' => '2020-01-01',
+            'department_id' => 3,
+            'sub_department_id' => 7,
+            'designation' => 'Software Engineer',
+            'day_off' => 'Sunday',
+            'confirmation_date' => '2020-01-01',
+        ]);
+
+        spouse::create([
+            'id' => 1,
+            'title' => 'Mrs',
+            'name' => 'Tharushi Bandara',
+            'nic' => '123456789102',
+            'age' => 28,
+            'dob' => '1995-01-01',
+        ]);
+
+        employee::create([
+            'title' => 'Mr',
+            'attendance_employee_no' => 1,
+            'epf' => 1,
+            'nic' => '123456789101',
+            'dob' => '1995-01-01',
+            'gender' => 'male',
+            'name_with_initials' => 'Isuru Bandara',
+            'full_name' => 'Isuru Bandara',
+            'display_name' => 'razorisuru',
+            'is_active' => 1,
+            'employment_type_id' => 1,
+            'organization_assignment_id' => 1,
+            'marital_status' => 'married',
+            'spouse_id' => 1,
+        ]);
+
+        children::insert([
+            [
+                'name' => 'Athendi Themuni',
+                'nic' => '123456789103',
+                'age' => 5,
+                'dob' => '2018-01-01',
+                'employee_id' => 1,
+            ],
+            [
+                'name' => 'Methendi Weluni',
+                'nic' => '12345678910',
+                'age' => 5,
+                'dob' => '2018-01-01',
+                'employee_id' => 1,
+            ]
+        ]);
+
 
     }
 }
