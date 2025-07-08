@@ -2,8 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\contact_detail;
-use App\Models\organization_assignment;
 use App\Models\User;
 use App\Models\roles;
 use App\Models\shifts;
@@ -13,11 +11,14 @@ use App\Models\children;
 use App\Models\employee;
 use App\Models\allowances;
 use App\Models\departments;
+use App\Models\designation;
+use App\Models\contact_detail;
 use App\Models\pay_deductions;
 use App\Models\employment_type;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use App\Models\sub_departments;
 use Illuminate\Database\Seeder;
+use App\Models\organization_assignment;
 
 class DatabaseSeeder extends Seeder
 {
@@ -87,6 +88,14 @@ class DatabaseSeeder extends Seeder
                 }
             }
         }
+
+        designation::insert([
+            ['name' => 'Software Engineer', 'description' => 'Responsible for software development'],
+            ['name' => 'HR Manager', 'description' => 'Manages HR operations'],
+            ['name' => 'Finance Analyst', 'description' => 'Analyzes financial data'],
+            ['name' => 'Marketing Specialist', 'description' => 'Handles marketing campaigns'],
+            ['name' => 'Operations Manager', 'description' => 'Oversees daily operations'],
+        ]);
 
         $shifts = [
             ['001', 'No OT - WD', '08:00:00', '17:00:00', '08:00:00', '17:00:00', '00:00:00', false, 4.5],
@@ -162,9 +171,15 @@ class DatabaseSeeder extends Seeder
             ],
         ]);
 
-        company::create([
-            'id' => 1,
-            'name' => 'SIBA'
+        company::insert([
+            [
+                'id' => 1,
+                'name' => 'ABC Pvt Ltd'
+            ],
+            [
+                'id' => 2,
+                'name' => 'XYZ Pvt Ltd'
+            ],
         ]);
 
         organization_assignment::create([
@@ -174,7 +189,7 @@ class DatabaseSeeder extends Seeder
             'date_of_joining' => '2020-01-01',
             'department_id' => 3,
             'sub_department_id' => 7,
-            'designation' => 'Software Engineer',
+            'designation_id' => 1,
             'day_off' => 'Sunday',
             'confirmation_date' => '2020-01-01',
         ]);

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ApiDataController;
 use App\Http\Controllers\EmployeeController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -28,3 +29,10 @@ Route::get('/test', [AuthController::class, 'test']);
 Route::apiResource('users', UserController::class);
 Route::apiResource('shifts', ShiftController::class);
 Route::apiResource('employees', EmployeeController::class);
+
+Route::prefix('apiData')->group(function () {
+    Route::get('/companies', [ApiDataController::class, 'companies']);
+    Route::get('/departments', [ApiDataController::class, 'departments']);
+    Route::get('/subDepartments', [ApiDataController::class, 'subDepartments']);
+    Route::get('/designations', [ApiDataController::class, 'designations']);
+});
