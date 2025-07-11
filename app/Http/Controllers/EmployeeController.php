@@ -24,6 +24,98 @@ class EmployeeController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
+            // Profile picture validation (from FormData)
+            'profile_picture' => 'nullable|image|max:2048',
+
+            // JSON fields validation (these come as JSON strings in FormData)
+            'personal' => 'required|json',
+            'address' => 'required|json',
+            'compensation' => 'required|json',
+            'organization' => 'required|json',
+            'documents.*' => 'nullable|file|max:5120'
+        ]);
+
+        // Decode JSON data first
+        $personal = json_decode($request->input('personal'), true);
+        $address = json_decode($request->input('address'), true);
+        $compensation = json_decode($request->input('compensation'), true);
+        $organization = json_decode($request->input('organization'), true);
+
+        // Then validate the decoded arrays
+        $validator->after(function ($validator) use ($personal, $address, $compensation, $organization) {
+            // Validate personal data
+            $personalValidator = Validator::make($personal, [
+                'title' => 'required|string|max:10',
+                'attendanceEmpNo' => 'required|string|max:50',
+                'epfNo' => 'required|string|max:50',
+                'nicNumber' => 'required|string|max:20',
+                'dob' => 'required|date',
+                'gender' => 'required|in:Male,Female,Other',
+                'religion' => 'nullable|string|max:50',
+                'countryOfBirth' => 'nullable|string|max:100',
+                'employmentStatus' => 'required',
+                'nameWithInitial' => 'required|string|max:100',
+                'fullName' => 'required|string|max:100',
+                'displayName' => 'required|string|max:100',
+                'maritalStatus' => 'required|in:Single,Married,Divorced,Widowed',
+                'relationshipType' => 'nullable|string|max:20',
+                'spouseName' => 'nullable|string|max:100',
+                'spouseAge' => 'nullable|numeric|min:18|max:100',
+                'spouseDob' => 'nullable|date',
+                'spouseNic' => 'nullable|string|max:20',
+                // Note: profilePicture is handled separately in the file upload
+            ]);
+
+            // Validate address data
+            // $addressValidator = Validator::make($address, [
+            //     'permanentAddress' => 'required|string|max:255',
+            //     'temporaryAddress' => 'nullable|string|max:255',
+            //     'email' => 'required|email|max:100',
+            //     'landLine' => 'nullable|string|max:20',
+            //     'mobileLine' => 'required|string|max:20',
+            //     // Add other address fields as needed
+            // ]);
+
+
+
+            // Add errors to main validator if any
+            foreach ($personalValidator->errors()->toArray() as $key => $messages) {
+                foreach ($messages as $message) {
+                    $validator->errors()->add("personal.$key", $message);
+                }
+            }
+
+            // foreach ($addressValidator->errors()->toArray() as $key => $messages) {
+            //     foreach ($messages as $message) {
+            //         $validator->errors()->add("address.$key", $message);
+            //     }
+            // }
+
+            // Add similar validation for compensation and organization
+        });
+
+        $profilePicturePath = null;
+        if ($request->hasFile('profile_picture')) {
+            $profilePicturePath = $request->file('profile_picture')->store('employee/profile_pictures', 'public');
+            $personal['profile_picture_path'] = $profilePicturePath;
+        }
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Validation failed',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        return response()->json(['message' => 'Employee data validated and processed successfully.', 'data' => $personal], 201);
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(string $id, Request $request)
+    {
+        $validator = Validator::make($request->all(), [
             'title' => 'required|string|max:10',
             'attendanceEmpNo' => 'required|string|max:50',
             'epfNo' => 'required|string|max:50',
@@ -121,14 +213,6 @@ class EmployeeController extends Controller
             ], 422);
         }
         return response()->json(['message' => 'Employee data validated and processed successfully.', 'data' => $request->all()], 201);
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(string $id)
-    {
-        //
     }
 
     /**
