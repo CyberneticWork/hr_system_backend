@@ -67,15 +67,74 @@ class EmployeeController extends Controller
             ]);
 
             // Validate address data
-            // $addressValidator = Validator::make($address, [
-            //     'permanentAddress' => 'required|string|max:255',
-            //     'temporaryAddress' => 'nullable|string|max:255',
-            //     'email' => 'required|email|max:100',
-            //     'landLine' => 'nullable|string|max:20',
-            //     'mobileLine' => 'required|string|max:20',
-            //     // Add other address fields as needed
-            // ]);
+            $addressValidator = Validator::make($address, [
+                'permanentAddress' => 'required|string|max:255',
+                'temporaryAddress' => 'nullable|string|max:255',
+                'email' => 'required|email',
+                'alandLine' => 'nullable|string|max:20',
+                'mobileLine' => 'nullable|string|max:20',
+                'gnDivision' => 'nullable|string|max:100',
+                'policeStation' => 'nullable|string|max:100',
+                'district' => 'required|string|max:100',
+                'province' => 'required|string|max:100',
+                'electoralDivision' => 'nullable|string|max:100',
 
+                // Emergency contact
+                'emergencyContact.relationship' => 'required|string|max:50',
+                'emergencyContact.contactName' => 'required|string|max:100',
+                'emergencyContact.contactAddress' => 'required|string|max:255',
+                'emergencyContact.contactTel' => 'required|string|max:20',
+                //     // Add other address fields as needed
+            ]);
+
+
+            $compensationValidator = Validator::make($compensation, [
+                'basicSalary' => 'required|numeric',
+                'incrementValue' => 'nullable|numeric',
+                'incrementEffectiveFrom' => 'nullable|date',
+                'bankName' => 'nullable|string|max:100',
+                'branchName' => 'nullable|string|max:100',
+                'bankCode' => 'nullable|string|max:50',
+                'branchCode' => 'nullable|string|max:50',
+                'bankAccountNo' => 'nullable|string|max:50',
+                'comments' => 'nullable|string|max:255',
+                'secondaryEmp' => 'required|boolean',
+                'primaryEmploymentBasic' => 'required|boolean',
+                'enableEpfEtf' => 'required|boolean',
+                'otActive' => 'required|boolean',
+                'earlyDeduction' => 'required|boolean',
+                'incrementActive' => 'required|boolean',
+                'nopayActive' => 'required|boolean',
+                'morningOt' => 'required|boolean',
+                'eveningOt' => 'required|boolean',
+                'budgetaryReliefAllowance2015' => 'required|boolean',
+                'budgetaryReliefAllowance2016' => 'required|boolean',
+            ]);
+
+
+            $organizationValidator = Validator::make($organization, [
+                'company' => 'required|string',
+                'department' => 'required|string',
+                'subDepartment' => 'required|string',
+                'currentSupervisor' => 'nullable|string|max:100',
+                'dateOfJoined' => 'required|date',
+                'designation' => 'required|string|max:100',
+                'probationPeriod' => 'required|boolean',
+                'trainingPeriod' => 'required|boolean',
+                'contractPeriod' => 'required|boolean',
+                'probationFrom' => 'nullable|date',
+                'probationTo' => 'nullable|date',
+                'trainingFrom' => 'nullable|date',
+                'trainingTo' => 'nullable|date',
+                'contractFrom' => 'nullable|date',
+                'contractTo' => 'nullable|date|after_or_equal:contractFrom',
+                'confirmationDate' => 'nullable|date',
+                'resignationDate' => 'nullable|date',
+                'resignationLetter' => 'nullable',
+                'resignationApproved' => 'required|boolean',
+                'currentStatus' => 'required|string',
+                'dayOff' => 'required|string'
+            ]);
 
 
             // Add errors to main validator if any
@@ -85,11 +144,23 @@ class EmployeeController extends Controller
                 }
             }
 
-            // foreach ($addressValidator->errors()->toArray() as $key => $messages) {
-            //     foreach ($messages as $message) {
-            //         $validator->errors()->add("address.$key", $message);
-            //     }
-            // }
+            foreach ($addressValidator->errors()->toArray() as $key => $messages) {
+                foreach ($messages as $message) {
+                    $validator->errors()->add("address.$key", $message);
+                }
+            }
+
+            foreach ($compensationValidator->errors()->toArray() as $key => $messages) {
+                foreach ($messages as $message) {
+                    $validator->errors()->add("compensation.$key", $message);
+                }
+            }
+
+            foreach ($organizationValidator->errors()->toArray() as $key => $messages) {
+                foreach ($messages as $message) {
+                    $validator->errors()->add("organization.$key", $message);
+                }
+            }
 
             // Add similar validation for compensation and organization
         });
@@ -107,7 +178,7 @@ class EmployeeController extends Controller
             ], 422);
         }
 
-        return response()->json(['message' => 'Employee data validated and processed successfully.', 'data' => $personal], 201);
+        return response()->json(['message' => 'Employee data validated and processed successfully.', 'personal' => $personal, 'address' => $address, 'compensation' => $compensation, 'organization' => $organization], 201);
     }
 
     /**
