@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ShiftController;
+use App\Http\Controllers\LoanController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -29,6 +30,7 @@ Route::get('/test', [AuthController::class, 'test']);
 Route::apiResource('users', UserController::class);
 Route::apiResource('shifts', ShiftController::class);
 Route::apiResource('employees', EmployeeController::class);
+Route::apiResource('loans', LoanController::class);
 
 Route::prefix('apiData')->group(function () {
     Route::get('/companies', [ApiDataController::class, 'companies']);
