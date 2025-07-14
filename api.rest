@@ -1,0 +1,60 @@
+POST http://127.0.0.1:8000/api/login
+Content-Type: application/json
+
+{
+  "email": "isuru@mail.com",
+  "password": "123456789"
+}
+
+### register a new user
+POST http://127.0.0.1:8000/api/register
+Content-Type: application/json
+
+{
+    "name": "janitha",
+    "email": "janitha@mail.com",
+    "password": "123456789"
+}
+
+
+### test authentication
+GET http://127.0.0.1:8000/api/user
+Authorization: Bearer 1|jEI59gEBbS8gCSvjFZTxe8SWLNHxOfq3amxEQREPf5b62e77
+Content-Type: application/json
+
+### logout
+GET http://127.0.0.1:8000/api/logout
+Authorization: Bearer 2|g8d21J3XZQOeQsY9MKEuJbNHwMGEU4iz4KGWLv6Jaaa419f8
+Content-Type: application/json
+
+### insert deduction
+POST http://127.0.0.1:8000/api/deductions
+Content-Type: application/json
+
+{
+    "department_id": 2,
+    "deduction_code": "D004",
+    "deduction_name": "Health Insurance",
+    "description": "Monthly health insurance deduction",
+    "status": "active",
+    "category": "EPF",
+    "deduction_type": "fixed",
+    "startDate": "2023-01-01",
+    "endDate": "2026-12-31"
+}
+
+### Edit deductions
+PUT http://127.0.0.1:8000/api/deductions/1
+Content-Type: application/json
+
+{
+    "department_id": 2,
+    "deduction_name": "Health Insurance test",
+    "description": "Monthly health insurance deduction",
+    "status": "active",
+    "category": "EPF",
+    "deduction_type": "fixed",
+    "startDate": "2023-01-01",
+    "endDate": "2026-12-31"
+}
+
