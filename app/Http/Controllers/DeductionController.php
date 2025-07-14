@@ -14,7 +14,9 @@ class DeductionController extends Controller
 
     public function index()
     {
-        $deductions = deduction::all();
+        $deductions = deduction::with('department', 'company')->get();
+
+
         return response()->json($deductions);
     }
 
