@@ -25,7 +25,7 @@ class EmployeeController extends Controller
     {
         $validator = Validator::make($request->all(), [
             // Profile picture validation (from FormData)
-            'profile_picture' => 'nullable|image|max:2048',
+            'profilePicture' => 'required|image|max:2048',
 
             // JSON fields validation (these come as JSON strings in FormData)
             'personal' => 'required|json',
@@ -58,11 +58,11 @@ class EmployeeController extends Controller
                 'fullName' => 'required|string|max:100',
                 'displayName' => 'required|string|max:100',
                 'maritalStatus' => 'required|in:Single,Married,Divorced,Widowed',
-                'relationshipType' => 'nullable|string|max:20',
-                'spouseName' => 'nullable|string|max:100',
-                'spouseAge' => 'nullable|numeric|min:18|max:100',
-                'spouseDob' => 'nullable|date',
-                'spouseNic' => 'nullable|string|max:20',
+                'relationshipType' => 'required|string|max:20',
+                'spouseName' => 'required|string|max:100',
+                'spouseAge' => 'required|numeric|min:18|max:100',
+                'spouseDob' => 'required|date',
+                'spouseNic' => 'required|string|max:20',
                 // Note: profilePicture is handled separately in the file upload
             ]);
 
@@ -166,7 +166,7 @@ class EmployeeController extends Controller
         });
 
         $profilePicturePath = null;
-        if ($request->hasFile('profile_picture')) {
+        if ($request->hasFile('profilePicture')) {
             $profilePicturePath = $request->file('profile_picture')->store('employee/profile_pictures', 'public');
             $personal['profile_picture_path'] = $profilePicturePath;
         }
