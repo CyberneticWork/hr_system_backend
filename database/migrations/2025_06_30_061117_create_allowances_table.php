@@ -22,7 +22,11 @@ return new class extends Migration {
 
            
             $table->foreignId('company_id')->constrained('companies');
-
+            $table->foreignId('department_id')->constrained('departments');
+            $table->decimal('amount', 50, 2)->default(0.00);
+            $table->date('fixed_date')->nullable();
+            $table->date('variable_from')->nullable();
+            $table->date('variable_to')->nullable();
             $table->softDeletes();
             $table->timestamps();
 
@@ -30,6 +34,7 @@ return new class extends Migration {
             $table->index('allowance_code');
             $table->index('allowance_name');
             $table->index('company_id');
+            $table->index('department_id');
         });
     }
 
