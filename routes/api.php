@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ShiftController;
-
+use App\Http\Controllers\AllowancesController;
 Route::get('/user', function (Request $request) {
     return $request->user();
 })->middleware('auth:sanctum');
@@ -29,10 +29,12 @@ Route::get('/test', [AuthController::class, 'test']);
 Route::apiResource('users', UserController::class);
 Route::apiResource('shifts', ShiftController::class);
 Route::apiResource('employees', EmployeeController::class);
+Route::apiResource('allowances', AllowancesController::class);
 
 Route::prefix('apiData')->group(function () {
     Route::get('/companies', [ApiDataController::class, 'companies']);
     Route::get('/departments', [ApiDataController::class, 'departments']);
     Route::get('/subDepartments', [ApiDataController::class, 'subDepartments']);
     Route::get('/designations', [ApiDataController::class, 'designations']);
+  
 });
