@@ -10,19 +10,15 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('spouses', function (Blueprint $table) {
+        Schema::create('sub_departments', function (Blueprint $table) {
             $table->id();
-            $table->enum('type', ['husband', 'wife', 'relation', 'non-relation', 'friend']);
-            $table->string('title');
             $table->string('name');
-            $table->integer('age');
-            $table->date('dob');
-            $table->string('nic')->unique();
+            $table->foreignId('department_id')->constrained('departments')->onDelete('cascade');
 
             $table->softDeletes();
             $table->timestamps();
 
-            $table->index('nic');
+            $table->index('department_id');
         });
     }
 
@@ -31,6 +27,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('spouses');
+        Schema::dropIfExists('sub_departments');
     }
 };

@@ -10,20 +10,20 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('childrens', function (Blueprint $table) {
+        Schema::create('documents', function (Blueprint $table) {
             $table->id();
             $table->foreignId('employee_id')->constrained('employees')->onDelete('cascade');
-            $table->string('name');
-            $table->integer('age');
-            $table->date('dob');
-            $table->string('nic')->unique()->nullable();
+            $table->string('national_id')->nullable();
+            $table->string('passport')->nullable();
+            $table->string('resume')->nullable();
+            $table->string('educational_certificates')->nullable();
+            $table->string('experience_letters')->nullable();
+            $table->string('other_documents')->nullable();
 
             $table->softDeletes();
             $table->timestamps();
 
             $table->index('employee_id');
-            $table->index('nic');
-
         });
     }
 
@@ -32,6 +32,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('childrens');
+        Schema::dropIfExists('documents');
     }
 };

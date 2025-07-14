@@ -10,19 +10,16 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('spouses', function (Blueprint $table) {
+        Schema::create('allowances', function (Blueprint $table) {
             $table->id();
-            $table->enum('type', ['husband', 'wife', 'relation', 'non-relation', 'friend']);
-            $table->string('title');
-            $table->string('name');
-            $table->integer('age');
-            $table->date('dob');
-            $table->string('nic')->unique();
+            $table->string('allowance_code')->unique();
+            $table->string('allowance_name');
 
             $table->softDeletes();
             $table->timestamps();
 
-            $table->index('nic');
+            $table->index('allowance_code');
+            $table->index('allowance_name');
         });
     }
 
@@ -31,6 +28,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('spouses');
+        Schema::dropIfExists('allowances');
     }
 };

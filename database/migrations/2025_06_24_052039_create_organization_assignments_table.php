@@ -12,13 +12,16 @@ return new class extends Migration {
     {
         Schema::create('organization_assignments', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('employee_id')->constrained('employees')->onDelete('cascade');
-            $table->string('company');
+
+            $table->foreignId('company_id')->nullable()->constrained('companies')->onDelete('set null');
             $table->string('current_supervisor')->nullable();
             $table->date('date_of_joining')->nullable();
-            $table->string('department')->nullable();
-            $table->string('sub_department')->nullable();
-            $table->string('designation')->nullable();
+
+            $table->foreignId('department_id')->nullable()->constrained('departments')->onDelete('set null');
+            $table->foreignId('sub_department_id')->nullable()->constrained('sub_departments')->onDelete('set null');
+
+            // to do list. if designation not good add enum
+            $table->foreignId('designation_id')->nullable()->constrained('designations')->onDelete('set null');
             $table->enum('day_off', ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'])->nullable();
             $table->date('confirmation_date')->nullable();
 
@@ -38,7 +41,13 @@ return new class extends Migration {
             $table->boolean('is_active')->default(true);
             $table->string('letter_path')->nullable();
 
+            $table->softDeletes();
             $table->timestamps();
+
+            $table->index('company_id');
+            $table->index('department_id');
+            $table->index('sub_department_id');
+
         });
     }
 

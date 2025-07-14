@@ -10,20 +10,20 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('childrens', function (Blueprint $table) {
+        Schema::create('loans', function (Blueprint $table) {
             $table->id();
+            $table->string('loan_id')->unique();
             $table->foreignId('employee_id')->constrained('employees')->onDelete('cascade');
-            $table->string('name');
-            $table->integer('age');
-            $table->date('dob');
-            $table->string('nic')->unique()->nullable();
+            $table->decimal('loan_amount', 10, 2);
+            $table->decimal('interest_rate_per_annum', 5, 2)->default(0);
+            $table->decimal('installment_amount', 10, 2);
+            $table->date('start_from');
+            $table->boolean('with_interest')->default(false);
 
             $table->softDeletes();
             $table->timestamps();
 
             $table->index('employee_id');
-            $table->index('nic');
-
         });
     }
 
@@ -32,6 +32,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('childrens');
+        Schema::dropIfExists('loans');
     }
 };

@@ -10,19 +10,17 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('spouses', function (Blueprint $table) {
+        Schema::create('pay_deductions', function (Blueprint $table) {
             $table->id();
-            $table->enum('type', ['husband', 'wife', 'relation', 'non-relation', 'friend']);
-            $table->string('title');
-            $table->string('name');
-            $table->integer('age');
-            $table->date('dob');
-            $table->string('nic')->unique();
+            $table->string('pay_deduction_code')->unique();
+            $table->string('pay_deduction_name');
+            $table->decimal('pay_deduction_amount', 10, 2)->default(0);
 
             $table->softDeletes();
             $table->timestamps();
 
-            $table->index('nic');
+            $table->index('pay_deduction_code');
+            $table->index('pay_deduction_name');
         });
     }
 
@@ -31,6 +29,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('spouses');
+        Schema::dropIfExists('pay_deductions');
     }
 };
