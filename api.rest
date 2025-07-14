@@ -6,6 +6,16 @@ Content-Type: application/json
   "password": "123456789"
 }
 
+### register a new user
+POST http://127.0.0.1:8000/api/register
+Content-Type: application/json
+
+{
+    "name": "janitha",
+    "email": "janitha@mail.com",
+    "password": "123456789"
+}
+
 
 ### test authentication
 GET http://127.0.0.1:8000/api/user
@@ -14,5 +24,5 @@ Content-Type: application/json
 
 ### logout
 GET http://127.0.0.1:8000/api/logout
-Authorization: Bearer 1|jEI59gEBbS8gCSvjFZTxe8SWLNHxOfq3amxEQREPf5b62e77
+Authorization: Bearer 2|g8d21J3XZQOeQsY9MKEuJbNHwMGEU4iz4KGWLv6Jaaa419f8
 Content-Type: application/json
