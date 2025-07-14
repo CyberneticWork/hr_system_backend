@@ -14,4 +14,9 @@ class departments extends Model
         return $this->hasMany(deduction::class);
     }
 
+    public function company()
+    {
+        return $this->belongsTo(Company::class);
+    }
+
 }
