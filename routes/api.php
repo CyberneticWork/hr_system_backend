@@ -8,6 +8,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\LoanController;
+use App\Http\Controllers\DeductionController;
 
 use App\Http\Controllers\AllowancesController;
 Route::get('/user', function (Request $request) {
@@ -33,6 +34,7 @@ Route::apiResource('shifts', ShiftController::class);
 Route::apiResource('employees', EmployeeController::class);
 Route::apiResource('loans', LoanController::class);
 Route::apiResource('allowances', AllowancesController::class);
+Route::apiResource('deductions', DeductionController::class);
 
 Route::prefix('apiData')->group(function () {
     Route::get('/companies', [ApiDataController::class, 'companies']);
