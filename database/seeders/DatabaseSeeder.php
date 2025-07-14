@@ -132,21 +132,21 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
-        $allowances = [
-            ['001', 'Traveling Allowance'],
-            ['002', 'Special Allowance'],
-            ['003', 'Attendance Allowance'],
-            ['004', 'Production Incentive'],
-            ['005', 'Medical Reimbursement'],
-            ['006', 'Other Reimbursement'],
-        ];
+        // $allowances = [
+        //     ['001', 'Traveling Allowance'],
+        //     ['002', 'Special Allowance'],
+        //     ['003', 'Attendance Allowance'],
+        //     ['004', 'Production Incentive'],
+        //     ['005', 'Medical Reimbursement'],
+        //     ['006', 'Other Reimbursement'],
+        // ];
 
-        foreach ($allowances as [$code, $name]) {
-            allowances::create([
-                'allowance_code' => $code,
-                'allowance_name' => $name,
-            ]);
-        }
+        // foreach ($allowances as [$code, $name]) {
+        //     allowances::create([
+        //         'allowance_code' => $code,
+        //         'allowance_name' => $name,
+        //     ]);
+        // }
 
         pay_deductions::insert([
             [
