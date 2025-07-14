@@ -40,4 +40,8 @@ Route::prefix('apiData')->group(function () {
     Route::get('/subDepartments', [ApiDataController::class, 'subDepartments']);
     Route::get('/designations', [ApiDataController::class, 'designations']);
 
+    Route::get('/companies/{id}', [ApiDataController::class, 'companiesById']);
+    Route::get('/departments/{id}', [ApiDataController::class, 'departmentsById']);
+    Route::get('/subDepartments/{id}', [ApiDataController::class, 'subDepartmentsById']);
+
 });
