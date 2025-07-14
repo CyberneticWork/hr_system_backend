@@ -25,7 +25,7 @@ class EmployeeController extends Controller
     {
         $validator = Validator::make($request->all(), [
             // Profile picture validation (from FormData)
-            'profilePicture' => 'required|image|max:2048',
+            'profile_picture' => 'required|image|max:2048',
 
             // JSON fields validation (these come as JSON strings in FormData)
             'personal' => 'required|json',
@@ -166,7 +166,7 @@ class EmployeeController extends Controller
         });
 
         $profilePicturePath = null;
-        if ($request->hasFile('profilePicture')) {
+        if ($request->hasFile('profile_picture')) {
             $profilePicturePath = $request->file('profile_picture')->store('employee/profile_pictures', 'public');
             $personal['profile_picture_path'] = $profilePicturePath;
         }
