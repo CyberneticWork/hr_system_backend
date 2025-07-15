@@ -8,4 +8,9 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class sub_departments extends Model
 {
     use SoftDeletes;
+
+    public function department()
+    {
+        return $this->belongsTo(departments::class, 'department_id');
+    }
 }

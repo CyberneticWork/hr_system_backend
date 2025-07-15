@@ -7,6 +7,8 @@ use App\Models\departments;
 use App\Models\designation;
 use Illuminate\Http\Request;
 use App\Models\sub_departments;
+use App\Models\organization_assignment;
+use App\Models\employee;
 
 class ApiDataController extends Controller
 {
@@ -16,10 +18,10 @@ class ApiDataController extends Controller
             return [
                 'id' => $company->id,
                 'name' => $company->name,
-                'code' => null,
-                'location' => null,
+                // 'code' => null,
+                'location' => $company->location,
                 'employees' => $company->employees_count,
-                'established' => null,
+                'established' => $company->established,
             ];
         });
         return response()->json($companies, 200);
@@ -27,15 +29,47 @@ class ApiDataController extends Controller
 
     public function departments()
     {
-        // Assuming you have a Department model
-        $departments = departments::all();
+        $departments = departments::with('company')->get()->map(function ($dept) {
+            // Count employees for this department
+            $employeeCount = organization_assignment::where('department_id', $dept->id)
+                ->pluck('id')
+                ->pipe(function ($assignmentIds) {
+                    return employee::whereIn('organization_assignment_id', $assignmentIds)->count();
+                });
+
+            return [
+                'id' => $dept->id,
+                'name' => $dept->name,
+                // 'code' => null, 
+                // 'manager' => null, 
+                'employees' => $employeeCount,
+                'company_id' => $dept->company_id,
+                'company_name' => $dept->company ? $dept->company->name : null,
+                'subdepartments' => [], // Will be filled in frontend
+            ];
+        });
         return response()->json($departments, 200);
     }
 
     public function subDepartments()
     {
-        // Assuming you have a Department model
-        $subDepartments = sub_departments::all();
+        $subDepartments = sub_departments::with('department')->get()->map(function ($sub) {
+            // Count employees for this sub-department
+            $employeeCount = organization_assignment::where('sub_department_id', $sub->id)
+                ->pluck('id')
+                ->pipe(function ($assignmentIds) {
+                    return employee::whereIn('organization_assignment_id', $assignmentIds)->count();
+                });
+
+            return [
+                'id' => $sub->id,
+                'name' => $sub->name,
+                // 'manager' => null, 
+                'employees' => $employeeCount,
+                'department_id' => $sub->department_id,
+                'department_name' => $sub->department ? $sub->department->name : null,
+            ];
+        });
         return response()->json($subDepartments, 200);
     }
 
