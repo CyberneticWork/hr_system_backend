@@ -56,38 +56,8 @@ class DatabaseSeeder extends Seeder
 
 
 
-        $departments = [
-            'IT',
-            'Human Resources',
-            'Finance',
-            'Marketing',
-            'Operations'
-        ];
 
-        foreach ($departments as $dept) {
-            departments::create(['name' => $dept]);
-        }
 
-        $subDepartments = [
-            'IT' => ['Software Development', 'Network Administration', 'Technical Support'],
-            'Human Resources' => ['Recruitment', 'Employee Relations'],
-            'Finance' => ['Accounts Payable', 'Accounts Receivable'],
-            'Marketing' => ['Digital Marketing', 'Brand Management'],
-            'Operations' => ['Logistics', 'Facilities']
-        ];
-
-        foreach ($subDepartments as $deptName => $subs) {
-            $department = departments::where('name', $deptName)->first();
-
-            if ($department) {
-                foreach ($subs as $sub) {
-                    sub_departments::create([
-                        'name' => $sub,
-                        'department_id' => $department->id
-                    ]);
-                }
-            }
-        }
 
         designation::insert([
             ['name' => 'Software Engineer', 'description' => 'Responsible for software development'],
@@ -132,21 +102,21 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
-        $allowances = [
-            ['001', 'Traveling Allowance'],
-            ['002', 'Special Allowance'],
-            ['003', 'Attendance Allowance'],
-            ['004', 'Production Incentive'],
-            ['005', 'Medical Reimbursement'],
-            ['006', 'Other Reimbursement'],
-        ];
+        // $allowances = [
+        //     ['001', 'Traveling Allowance'],
+        //     ['002', 'Special Allowance'],
+        //     ['003', 'Attendance Allowance'],
+        //     ['004', 'Production Incentive'],
+        //     ['005', 'Medical Reimbursement'],
+        //     ['006', 'Other Reimbursement'],
+        // ];
 
-        foreach ($allowances as [$code, $name]) {
-            allowances::create([
-                'allowance_code' => $code,
-                'allowance_name' => $name,
-            ]);
-        }
+        // foreach ($allowances as [$code, $name]) {
+        //     allowances::create([
+        //         'allowance_code' => $code,
+        //         'allowance_name' => $name,
+        //     ]);
+        // }
 
         pay_deductions::insert([
             [
@@ -181,6 +151,39 @@ class DatabaseSeeder extends Seeder
                 'name' => 'XYZ Pvt Ltd'
             ],
         ]);
+
+        $departments = [
+            ['name' => 'IT', 'company_id' => 1],
+            ['name' => 'Human Resources', 'company_id' => 1],
+            ['name' => 'Finance', 'company_id' => 2],
+            ['name' => 'Marketing', 'company_id' => 2],
+            ['name' => 'Operations', 'company_id' => 1],
+        ];
+
+        foreach ($departments as $dept) {
+            departments::create($dept);
+        }
+
+        $subDepartments = [
+            'IT' => ['Software Development', 'Network Administration', 'Technical Support'],
+            'Human Resources' => ['Recruitment', 'Employee Relations'],
+            'Finance' => ['Accounts Payable', 'Accounts Receivable'],
+            'Marketing' => ['Digital Marketing', 'Brand Management'],
+            'Operations' => ['Logistics', 'Facilities']
+        ];
+
+        foreach ($subDepartments as $deptName => $subs) {
+            $department = departments::where('name', $deptName)->first();
+
+            if ($department) {
+                foreach ($subs as $sub) {
+                    sub_departments::create([
+                        'name' => $sub,
+                        'department_id' => $department->id
+                    ]);
+                }
+            }
+        }
 
         organization_assignment::create([
             'id' => 1,

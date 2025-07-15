@@ -1,0 +1,41 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration {
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('deductions', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('department_id')->constrained('departments');
+            $table->string('deduction_code')->unique();
+            $table->string('deduction_name');
+            $table->text('description')->nullable();
+            $table->decimal('amount', 10, 2)->default(0);
+            $table->enum('status', ['active', 'inactive'])->default('active');
+            $table->enum('category', ['EPF', 'ETF', 'other'])->default('other');
+            $table->enum('deduction_type', ['fixed', 'variable'])->default('fixed');
+            $table->string('startDate')->nullable();
+            $table->string('endDate')->nullable();
+
+            $table->softDeletes();
+            $table->timestamps();
+            $table->index('deduction_code');
+            $table->index('deduction_name');
+            $table->index('department_id');
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('deductions');
+    }
+};

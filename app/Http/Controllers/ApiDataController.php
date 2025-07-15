@@ -45,4 +45,23 @@ class ApiDataController extends Controller
         $designations = designation::all();
         return response()->json($designations, 200);
     }
+
+    public function companiesById($id)
+    {
+        $company = company::find($id);
+        return response()->json($company, 200);
+    }
+
+    public function departmentsById($id)
+    {
+        $department = departments::where('company_id', $id)->get();
+        return response()->json($department, 200);
+    }
+
+    public function subDepartmentsById($id)
+    {
+        $subDepartment = sub_departments::where('department_id', $id)->get();
+        return response()->json($subDepartment, 200);
+    }
+
 }
