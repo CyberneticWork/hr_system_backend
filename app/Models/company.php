@@ -17,7 +17,7 @@ class company extends Model
     // Relationship: company → organization_assignments
     public function organizationAssignments()
     {
-        return $this->hasMany(\App\Models\organization_assignment::class, 'company_id');
+        return $this->hasMany(organization_assignment::class, 'company_id');
     }
 
     // Employees through organization_assignments

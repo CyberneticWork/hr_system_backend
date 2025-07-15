@@ -8,4 +8,11 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class documents extends Model
 {
     use SoftDeletes;
+
+    protected $fillable = [
+        'employee_id',
+        'document_path',
+        'document_name',
+        'uploaded_at'
+    ];
 }

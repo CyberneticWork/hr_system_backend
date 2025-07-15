@@ -9,6 +9,25 @@ class employee extends Model
 {
     use SoftDeletes;
 
+    protected $fillable = [
+        'title',
+        'attendance_employee_no',
+        'epf',
+        'nic',
+        'dob',
+        'gender',
+        'religion',
+        'country_of_birth',
+        'name_with_initials',
+        'full_name',
+        'display_name',
+        'marital_status',
+        'is_active',
+        'employment_type_id',
+        'organization_assignment_id',
+        'spouse_id',
+        'profile_photo_path'
+    ];
     public function employmentType()
     {
         return $this->belongsTo(employment_type::class);

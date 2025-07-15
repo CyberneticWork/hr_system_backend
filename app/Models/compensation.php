@@ -8,4 +8,28 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class compensation extends Model
 {
     use SoftDeletes;
+
+    protected $fillable = [
+        'employee_id',
+        'basic_salary',
+        'increment_value',
+        'increment_effected_date',
+        'bank_name',
+        'branch_name',
+        'bank_code',
+        'branch_code',
+        'bank_account_no',
+        'comments',
+        'secondary_emp',
+        'primary_emp_basic',
+        'enable_epf_etf',
+        'ot_active',
+        'early_deduction',
+        'increment_active',
+        'active_nopay',
+        'ot_morning',
+        'ot_evening',
+        'br1',
+        'br2'
+    ];
 }

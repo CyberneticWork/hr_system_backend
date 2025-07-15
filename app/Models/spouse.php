@@ -9,6 +9,16 @@ class spouse extends Model
 {
     use SoftDeletes;
 
+    protected $fillable = [
+        'type',
+        'title',
+        'name',
+        'age',
+        'dob',
+        'nic',
+
+    ];
+
     public function employees()
     {
         return $this->hasMany(employee::class);

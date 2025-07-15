@@ -19,11 +19,11 @@ return new class extends Migration
             $table->string('email');
             $table->string('land_line')->unique()->nullable();
             $table->string('mobile_line')->unique();
-            $table->string('gn_devision')->nullable();
+            $table->string('gn_division')->nullable();
             $table->string('police_station')->nullable();
             $table->string('district')->nullable();
             $table->string('province')->nullable();
-            $table->string('electronical_station')->nullable();
+            $table->string('electoral_division')->nullable();
             $table->string('emg_relationship')->nullable();
             $table->string('emg_name')->nullable();
             $table->string('emg_address')->nullable();
