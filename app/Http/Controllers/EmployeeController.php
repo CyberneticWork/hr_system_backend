@@ -24,6 +24,25 @@ class EmployeeController extends Controller
         return response()->json($employees, 200);
     }
 
+    public function getEmployeesForTable()
+    {
+        $employees = employee::with(['employmentType', 'contactDetail'])
+            ->select([
+                'id',
+                'full_name',
+                'name_with_initials',
+                'profile_photo_path',
+                'epf',
+                'title',
+                'attendance_employee_no',
+                'is_active',
+                'employment_type_id'
+            ])
+            ->get();
+
+        return response()->json($employees, 200);
+    }
+
 
     /**
      * Store a newly created resource in storage.
