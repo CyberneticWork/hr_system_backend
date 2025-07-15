@@ -12,7 +12,16 @@ class ApiDataController extends Controller
 {
     public function companies()
     {
-        $companies = company::all();
+        $companies = company::withCount('employees')->get()->map(function ($company) {
+            return [
+                'id' => $company->id,
+                'name' => $company->name,
+                'code' => null,
+                'location' => null,
+                'employees' => $company->employees_count,
+                'established' => null,
+            ];
+        });
         return response()->json($companies, 200);
     }
 
