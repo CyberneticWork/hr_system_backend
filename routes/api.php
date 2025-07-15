@@ -32,6 +32,7 @@ Route::get('/test', [AuthController::class, 'test']);
 Route::apiResource('users', UserController::class);
 Route::apiResource('shifts', ShiftController::class);
 Route::apiResource('employees', EmployeeController::class);
+Route::get('/emp/table', [EmployeeController::class, 'getEmployeesForTable']);
 Route::apiResource('loans', LoanController::class);
 Route::apiResource('allowances', AllowancesController::class);
 Route::apiResource('deductions', DeductionController::class);
