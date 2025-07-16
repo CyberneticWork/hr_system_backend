@@ -19,4 +19,9 @@ class departments extends Model
         return $this->belongsTo(Company::class, 'company_id');
     }
 
+    public function leaveCalendars(): HasMany
+    {
+        return $this->hasMany(leaveCalendar::class);
+    }
+
 }
