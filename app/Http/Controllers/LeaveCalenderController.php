@@ -23,7 +23,7 @@ class LeaveCalenderController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'department_id' => 'required|exists:departments,id',
+            'department_id' => 'sometimes|nullable|exists:departments,id',
             'company_id' => 'required|exists:companies,id',
             'leave_type' => 'required|string|max:255',
             'reason' => 'nullable|string|max:255',
@@ -63,7 +63,7 @@ class LeaveCalenderController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'department_id' => 'required|exists:departments,id',
+            'department_id' => 'sometimes|nullable|exists:departments,id',
             'company_id' => 'required|exists:companies,id',
             'leave_type' => 'required|string|max:255',
             'reason' => 'nullable|string|max:255',

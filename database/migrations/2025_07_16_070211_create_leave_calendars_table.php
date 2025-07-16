@@ -12,7 +12,7 @@ return new class extends Migration {
     {
         Schema::create('leave_calendars', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('department_id')->constrained('departments');
+            $table->foreignId('department_id')->nullable()->constrained('departments');
             $table->foreignId('company_id')->constrained('companies');
             $table->string('leave_type');
             $table->string('reason')->nullable();
