@@ -9,6 +9,14 @@ class children extends Model
 {
     use SoftDeletes;
 
+    protected $fillable = [
+        'employee_id',
+        'name',
+        'nic',
+        'age',
+        'dob'
+    ];
+
     public function employee()
     {
         return $this->belongsTo(employee::class);

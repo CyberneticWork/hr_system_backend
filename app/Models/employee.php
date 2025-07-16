@@ -43,7 +43,7 @@ class employee extends Model
         return $this->belongsTo(Spouse::class);
     }
 
-    public function childrens()
+    public function children()
     {
         return $this->hasMany(Children::class);
     }
