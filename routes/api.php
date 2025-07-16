@@ -10,6 +10,9 @@ use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\LoanController;
 use App\Http\Controllers\DeductionController;
 use App\Http\Controllers\AllowancesController;
+use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\DepartmentsController;
+use App\Http\Controllers\SubDepartmentsController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -36,6 +39,9 @@ Route::get('/emp/table', [EmployeeController::class, 'getEmployeesForTable']);
 Route::apiResource('loans', LoanController::class);
 Route::apiResource('allowances', AllowancesController::class);
 Route::apiResource('deductions', DeductionController::class);
+Route::apiResource('companies', CompanyController::class);
+Route::apiResource('departments', DepartmentsController::class)->only(['store', 'update', 'destroy']);
+Route::apiResource('subdepartments', SubDepartmentsController::class);
 
 Route::prefix('apiData')->group(function () {
     Route::get('/companies', [ApiDataController::class, 'companies']);
