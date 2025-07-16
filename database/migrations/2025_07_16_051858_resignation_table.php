@@ -15,8 +15,6 @@ return new class extends Migration {
             
             // Employee details
             $table->foreignId('employee_id')->constrained('employees');
-            $table->string('attendance_employee_no');
-            $table->string('employee_name');
             
             // Resignation details
             $table->date('resigning_date');
@@ -38,7 +36,6 @@ return new class extends Migration {
             
             // Indexes
             $table->index('employee_id');
-            $table->index('attendance_employee_no');
             $table->index('status');
         });
 

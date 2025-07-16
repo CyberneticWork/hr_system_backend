@@ -12,8 +12,6 @@ class Resignation extends Model
 
     protected $fillable = [
         'employee_id',
-        'attendance_employee_no',
-        'employee_name',
         'resigning_date',
         'last_working_day',
         'resignation_reason',
