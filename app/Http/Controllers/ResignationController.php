@@ -64,7 +64,7 @@ class ResignationController extends Controller
                 ResignationDocument::create([
                     'resignation_id' => $resignation->id,
                     'document_name' => $document->getClientOriginalName(),
-                    'file_path' => Storage::url($path),
+                    'file_path' => $path,
                     'file_type' => $document->getClientMimeType(),
                     'file_size' => $document->getSize()
                 ]);
@@ -118,13 +118,12 @@ class ResignationController extends Controller
 
         $uploadedDocuments = [];
         foreach ($request->file('documents') as $document) {
-             $path = $document->store('resignations' . $resignation->id, 'public');
-                
+           $path = $document->store('resignations' . $resignation->id, 'public');
             
             $uploadedDocument = ResignationDocument::create([
                 'resignation_id' => $resignation->id,
                 'document_name' => $document->getClientOriginalName(),
-                'file_path' => Storage::url($path),
+                'file_path' => $path,
                 'file_type' => $document->getClientMimeType(),
                 'file_size' => $document->getSize()
             ]);
