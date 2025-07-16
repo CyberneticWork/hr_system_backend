@@ -52,12 +52,12 @@ Route::prefix('apiData')->group(function () {
 
 });
 
-    // Resignation routes
-    Route::get('/resignations', [ResignationController::class, 'index']);
-    Route::post('/resignations', [ResignationController::class, 'store']);
-    Route::get('/resignations/{id}', [ResignationController::class, 'show']);
-    Route::put('/resignations/{id}/status', [ResignationController::class, 'updateStatus']);
+// Resignation routes
+Route::get('/resignations', [ResignationController::class, 'index']);
+Route::post('/resignations', [ResignationController::class, 'store']);
+Route::get('/resignations/{id}', [ResignationController::class, 'show']);
+Route::put('/resignations/{id}/status', [ResignationController::class, 'updateStatus']);
 
-    // Document routes
-    Route::post('/resignations/{id}/documents', [ResignationController::class, 'uploadDocuments']);
-    Route::delete('/resignations/{resignationId}/documents/{documentId}', [ResignationController::class, 'destroyDocument']);
+// Document routes
+Route::post('/resignations/{id}/documents', [ResignationController::class, 'uploadDocuments']);
+Route::delete('/resignations/{resignationId}/documents/{documentId}', [ResignationController::class, 'destroyDocument']);
