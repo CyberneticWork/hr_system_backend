@@ -59,7 +59,7 @@ class ResignationController extends Controller
         // Handle document uploads
         if ($request->hasFile('documents')) {
             foreach ($request->file('documents') as $document) {
-                $path = $document->store('resignations' . $resignation->id, 'public');
+                $path = $document->store('resignations'  , 'public');
                 
                 ResignationDocument::create([
                     'resignation_id' => $resignation->id,
@@ -118,7 +118,7 @@ class ResignationController extends Controller
 
         $uploadedDocuments = [];
         foreach ($request->file('documents') as $document) {
-           $path = $document->store('resignations' . $resignation->id, 'public');
+           $path = $document->store('resignations' , 'public');
             
             $uploadedDocument = ResignationDocument::create([
                 'resignation_id' => $resignation->id,
