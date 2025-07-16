@@ -10,6 +10,8 @@ use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\LoanController;
 use App\Http\Controllers\DeductionController;
 use App\Http\Controllers\AllowancesController;
+use App\Http\Controllers\ResignationController;
+use App\Http\Controllers\LeaveCalenderController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -36,6 +38,7 @@ Route::get('/emp/table', [EmployeeController::class, 'getEmployeesForTable']);
 Route::apiResource('loans', LoanController::class);
 Route::apiResource('allowances', AllowancesController::class);
 Route::apiResource('deductions', DeductionController::class);
+Route::apiResource('leave-calendars', LeaveCalenderController::class);
 
 Route::prefix('apiData')->group(function () {
     Route::get('/companies', [ApiDataController::class, 'companies']);
@@ -48,3 +51,13 @@ Route::prefix('apiData')->group(function () {
     Route::get('/subDepartments/{id}', [ApiDataController::class, 'subDepartmentsById']);
 
 });
+
+// Resignation routes
+Route::get('/resignations', [ResignationController::class, 'index']);
+Route::post('/resignations', [ResignationController::class, 'store']);
+Route::get('/resignations/{id}', [ResignationController::class, 'show']);
+Route::put('/resignations/{id}/status', [ResignationController::class, 'updateStatus']);
+
+// Document routes
+Route::post('/resignations/{id}/documents', [ResignationController::class, 'uploadDocuments']);
+Route::delete('/resignations/{resignationId}/documents/{documentId}', [ResignationController::class, 'destroyDocument']);

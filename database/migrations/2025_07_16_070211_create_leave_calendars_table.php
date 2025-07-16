@@ -10,17 +10,17 @@ return new class extends Migration {
      */
     public function up(): void
     {
-        Schema::create('documents', function (Blueprint $table) {
+        Schema::create('leave_calendars', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('employee_id')->constrained('employees')->onDelete('cascade');
-            $table->string('document_type')->nullable(); // Added document_type for clarity
-            $table->string('document_name')->nullable();
-            $table->string('document_path')->nullable();
+            $table->foreignId('department_id')->nullable()->constrained('departments');
+            $table->foreignId('company_id')->constrained('companies');
+            $table->string('leave_type');
+            $table->string('reason')->nullable();
+            $table->date('start_date');
+            $table->date('end_date')->nullable();
 
             $table->softDeletes();
             $table->timestamps();
-
-            $table->index('employee_id');
         });
     }
 
@@ -29,6 +29,6 @@ return new class extends Migration {
      */
     public function down(): void
     {
-        Schema::dropIfExists('documents');
+        Schema::dropIfExists('leave_calendars');
     }
 };

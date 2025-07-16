@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\children;
 use App\Models\spouse;
+use App\Models\children;
 use App\Models\employee;
+use App\Models\documents;
 use App\Models\compensation;
 use Illuminate\Http\Request;
 use App\Models\contact_detail;
@@ -48,11 +49,12 @@ class EmployeeController extends Controller
      */
     public function store(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            // Profile picture validation (from FormData)
-            'profile_picture' => 'required|image|max:2048',
+        // return response()->json([
+        //     'data' => $request->all(),
+        // ], 410);
 
-            // JSON fields validation (these come as JSON strings in FormData)
+        $validator = Validator::make($request->all(), [
+            'profile_picture' => 'required|image|max:2048',
             'personal' => 'required|json',
             'address' => 'required|json',
             'compensation' => 'required|json',
@@ -60,13 +62,13 @@ class EmployeeController extends Controller
             'documents.*' => 'nullable|file|max:5120'
         ]);
 
-        // Decode JSON data first
+        // Decode JSON data
         $personal = json_decode($request->input('personal'), true);
         $address = json_decode($request->input('address'), true);
         $compensation = json_decode($request->input('compensation'), true);
         $organization = json_decode($request->input('organization'), true);
 
-        // Then validate the decoded arrays
+        // Validate the decoded arrays
         $validator->after(function ($validator) use ($personal, $address, $compensation, $organization) {
             // Validate personal data
             $personalValidator = Validator::make($personal, [
@@ -78,15 +80,10 @@ class EmployeeController extends Controller
                     'string',
                     'max:13',
                     function ($attribute, $value, $fail) {
-                        // Remove any spaces or special characters
                         $nic = strtoupper(preg_replace('/[^a-zA-Z0-9]/', '', $value));
-
-                        // Check for old format (9 digits + V/X) or new format (12 digits)
                         if (!(preg_match('/^[0-9]{9}[VX]$/', $nic) || preg_match('/^[0-9]{12}$/', $nic))) {
                             $fail('The ' . $attribute . ' is not a valid Sri Lankan NIC number.');
                         }
-
-                        // Additional validation for new format (first 4 digits should be birth year)
                         if (strlen($nic) === 12) {
                             $year = substr($nic, 0, 4);
                             if ($year < 1900 || $year > date('Y')) {
@@ -114,15 +111,10 @@ class EmployeeController extends Controller
                     'string',
                     'max:13',
                     function ($attribute, $value, $fail) {
-                        // Remove any spaces or special characters
                         $nic = strtoupper(preg_replace('/[^a-zA-Z0-9]/', '', $value));
-
-                        // Check for old format (9 digits + V/X) or new format (12 digits)
                         if (!(preg_match('/^[0-9]{9}[VX]$/', $nic) || preg_match('/^[0-9]{12}$/', $nic))) {
                             $fail('The ' . $attribute . ' is not a valid Sri Lankan NIC number.');
                         }
-
-                        // Additional validation for new format (first 4 digits should be birth year)
                         if (strlen($nic) === 12) {
                             $year = substr($nic, 0, 4);
                             if ($year < 1900 || $year > date('Y')) {
@@ -131,6 +123,11 @@ class EmployeeController extends Controller
                         }
                     },
                 ],
+                'children' => 'nullable|array',
+                'children.*.name' => 'nullable|string|max:100',
+                'children.*.age' => 'required_if:children.*.name,!=,null|nullable|integer|min:0|max:100',
+                'children.*.dob' => 'required_if:children.*.name,!=,null|nullable|date',
+                'children.*.nic' => 'nullable|string|max:20',
             ]);
 
             // Validate address data
@@ -138,22 +135,18 @@ class EmployeeController extends Controller
                 'permanentAddress' => 'required|string|max:255',
                 'temporaryAddress' => 'nullable|string|max:255',
                 'email' => 'required|email',
-                'alandLine' => 'nullable|string|max:20',
+                'landLine' => 'nullable|string|max:20',
                 'mobileLine' => 'nullable|string|max:20',
                 'gnDivision' => 'nullable|string|max:100',
                 'policeStation' => 'nullable|string|max:100',
                 'district' => 'required|string|max:100',
                 'province' => 'required|string|max:100',
                 'electoralDivision' => 'nullable|string|max:100',
-
-                // Emergency contact
                 'emergencyContact.relationship' => 'required|string|max:50',
                 'emergencyContact.contactName' => 'required|string|max:100',
                 'emergencyContact.contactAddress' => 'required|string|max:255',
                 'emergencyContact.contactTel' => 'required|string|max:20',
-                //     // Add other address fields as needed
             ]);
-
 
             $compensationValidator = Validator::make($compensation, [
                 'basicSalary' => 'required|numeric',
@@ -177,7 +170,6 @@ class EmployeeController extends Controller
                 'budgetaryReliefAllowance2015' => 'required|boolean',
                 'budgetaryReliefAllowance2016' => 'required|boolean',
             ]);
-
 
             $organizationValidator = Validator::make($organization, [
                 'company' => 'required|string',
@@ -203,8 +195,7 @@ class EmployeeController extends Controller
                 'dayOff' => 'required|string'
             ]);
 
-
-            // Add errors to main validator if any
+            // Add errors to main validator
             foreach ($personalValidator->errors()->toArray() as $key => $messages) {
                 foreach ($messages as $message) {
                     $validator->errors()->add("personal.$key", $message);
@@ -228,15 +219,9 @@ class EmployeeController extends Controller
                     $validator->errors()->add("organization.$key", $message);
                 }
             }
-
-            // Add similar validation for compensation and organization
         });
 
-        $profilePicturePath = null;
-        if ($request->hasFile('profile_picture')) {
-            $profilePicturePath = $request->file('profile_picture')->store('employee/profile_pictures', 'public');
-            $personal['profile_picture_path'] = $profilePicturePath;
-        }
+
 
         if ($validator->fails()) {
             return response()->json([
@@ -248,7 +233,13 @@ class EmployeeController extends Controller
         DB::beginTransaction();
 
         try {
-            // Create spouse record first since employee references it
+            $profilePicturePath = null;
+            if ($request->hasFile('profile_picture')) {
+                $profilePicturePath = $request->file('profile_picture')->store('employee/profile_pictures', 'public');
+                $personal['profile_picture_path'] = $profilePicturePath;
+            }
+
+            // Create spouse record
             $spouse = spouse::create([
                 'type' => $personal['relationshipType'],
                 'title' => $personal['spouseTitle'],
@@ -260,7 +251,7 @@ class EmployeeController extends Controller
 
             // Create organization assignment
             $orgAssignment = organization_assignment::create([
-                'company_id' => $organization['company'], // Assuming these are IDs
+                'company_id' => $organization['company'],
                 'department_id' => $organization['department'],
                 'sub_department_id' => $organization['subDepartment'],
                 'designation_id' => $organization['designation'],
@@ -271,7 +262,6 @@ class EmployeeController extends Controller
                 'probationary_period' => $organization['probationPeriod'],
                 'training_period' => $organization['trainingPeriod'],
                 'contract_period' => $organization['contractPeriod'],
-
                 'probationary_period_from' => empty($organization['probationFrom']) ? null : $organization['probationFrom'],
                 'probationary_period_to' => empty($organization['probationTo']) ? null : $organization['probationTo'],
                 'training_period_from' => empty($organization['trainingFrom']) ? null : $organization['trainingFrom'],
@@ -279,8 +269,6 @@ class EmployeeController extends Controller
                 'contract_period_from' => empty($organization['contractFrom']) ? null : $organization['contractFrom'],
                 'contract_period_to' => empty($organization['contractTo']) ? null : $organization['contractTo'],
                 'date_of_resigning' => empty($organization['confirmationDate']) ? null : $organization['confirmationDate'],
-
-                // 'resignation_approved' => $organization['resignationApproved'],
                 'is_active' => $organization['currentStatus'],
             ]);
 
@@ -298,28 +286,62 @@ class EmployeeController extends Controller
                 'full_name' => $personal['fullName'],
                 'display_name' => $personal['displayName'],
                 'marital_status' => strtolower($personal['maritalStatus']),
-                'is_active' => true, // Assuming new employees are active
+                'is_active' => true,
                 'employment_type_id' => $personal['employmentStatus'],
                 'organization_assignment_id' => $orgAssignment->id,
                 'spouse_id' => $spouse->id,
                 'profile_photo_path' => $profilePicturePath,
             ]);
 
-            // Create children records if any
-            if (isset($personal['children']) && count($personal['children']) > 0) {
+            // Create children records if any valid children exist
+            if (isset($personal['children']) && is_array($personal['children'])) {
                 foreach ($personal['children'] as $child) {
+                    // Skip if name is empty (invalid child)
+                    if (empty($child['name'])) {
+                        continue;
+                    }
+
+                    // Validate child age and dob
+                    if (!isset($child['age']) || !is_numeric($child['age']) || $child['age'] < 0 || $child['age'] > 100) {
+                        continue;
+                    }
+
+                    if (!isset($child['dob']) || !strtotime($child['dob'])) {
+                        continue;
+                    }
+
                     children::create([
                         'employee_id' => $employee->id,
                         'name' => $child['name'],
-                        'nic' => empty($child['nic']) ? null : $child['nic'],
-                        'age' => $child['age'] ?? null,
-                        'dob' => $child['dob'] ?? null,
+                        'age' => (int) $child['age'],
+                        'dob' => $child['dob'],
+                        'nic' => empty($child['nic'] ?? null) ? null : $child['nic'],
+                    ]);
+                }
+            }
+
+            // Handle document uploads if any
+            if ($request->hasFile('documents')) {
+                // Get the documents metadata from the request
+                $documentsMeta = $request->input('documents');
+
+                foreach ($request->file('documents') as $index => $document) {
+                    $path = $document->store('employee/documents', 'public');
+
+                    // Extract the document type (e.g., "nid") from the metadata
+                    $documentType = $documentsMeta[$index]['type'] ?? 'unknown'; // Fallback to 'unknown' if not provided
+
+                    documents::create([
+                        'employee_id' => $employee->id,
+                        'document_type' => $documentType, // Will be "nid" in your case
+                        'document_path' => $path,
+                        'document_name' => $document->getClientOriginalName(),
                     ]);
                 }
             }
 
             // Create contact details
-            $contact = contact_detail::create([
+            contact_detail::create([
                 'employee_id' => $employee->id,
                 'permanent_address' => $address['permanentAddress'],
                 'temporary_address' => $address['temporaryAddress'] ?? null,
@@ -362,20 +384,6 @@ class EmployeeController extends Controller
                 'br2' => $compensation['budgetaryReliefAllowance2016'],
             ]);
 
-            // Handle document uploads if any
-            // if ($request->hasFile('documents')) {
-            //     foreach ($request->file('documents') as $document) {
-            //         $path = $document->store('employee/documents', 'public');
-
-            //         EmployeeDocument::create([
-            //             'employee_id' => $employee->id,
-            //             'document_path' => $path,
-            //             'document_name' => $document->getClientOriginalName(),
-            //             'uploaded_at' => now(),
-            //         ]);
-            //     }
-            // }
-
             DB::commit();
 
             return response()->json([
@@ -386,7 +394,6 @@ class EmployeeController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
 
-            // Delete uploaded profile picture if transaction fails
             if ($profilePicturePath && Storage::disk('public')->exists($profilePicturePath)) {
                 Storage::disk('public')->delete($profilePicturePath);
             }
@@ -394,15 +401,8 @@ class EmployeeController extends Controller
             return response()->json([
                 'message' => 'Employee creation failed',
                 'error' => $e->getMessage(),
-                // 'personal' => $personal,
-                // 'address' => $address,
-                // 'compensation' => $compensation,
-                // 'organization' => $organization,
-                // $profilePicturePath
             ], 500);
         }
-
-        // return response()->json(['message' => 'Employee data validated and processed successfully.', 'personal' => $personal, 'address' => $address, 'compensation' => $compensation, 'organization' => $organization], 201);
     }
 
     /**
