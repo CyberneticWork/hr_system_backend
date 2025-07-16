@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\children;
 use App\Models\spouse;
+use App\Models\children;
 use App\Models\employee;
+use App\Models\documents;
 use App\Models\compensation;
 use Illuminate\Http\Request;
 use App\Models\contact_detail;
@@ -48,6 +49,10 @@ class EmployeeController extends Controller
      */
     public function store(Request $request)
     {
+        // return response()->json([
+        //     'data' => $request->all(),
+        // ], 410);
+
         $validator = Validator::make($request->all(), [
             'profile_picture' => 'required|image|max:2048',
             'personal' => 'required|json',
@@ -233,6 +238,7 @@ class EmployeeController extends Controller
                 $profilePicturePath = $request->file('profile_picture')->store('employee/profile_pictures', 'public');
                 $personal['profile_picture_path'] = $profilePicturePath;
             }
+
             // Create spouse record
             $spouse = spouse::create([
                 'type' => $personal['relationshipType'],
@@ -310,6 +316,26 @@ class EmployeeController extends Controller
                         'age' => (int) $child['age'],
                         'dob' => $child['dob'],
                         'nic' => empty($child['nic'] ?? null) ? null : $child['nic'],
+                    ]);
+                }
+            }
+
+            // Handle document uploads if any
+            if ($request->hasFile('documents')) {
+                // Get the documents metadata from the request
+                $documentsMeta = $request->input('documents');
+
+                foreach ($request->file('documents') as $index => $document) {
+                    $path = $document->store('employee/documents', 'public');
+
+                    // Extract the document type (e.g., "nid") from the metadata
+                    $documentType = $documentsMeta[$index]['type'] ?? 'unknown'; // Fallback to 'unknown' if not provided
+
+                    documents::create([
+                        'employee_id' => $employee->id,
+                        'document_type' => $documentType, // Will be "nid" in your case
+                        'document_path' => $path,
+                        'document_name' => $document->getClientOriginalName(),
                     ]);
                 }
             }

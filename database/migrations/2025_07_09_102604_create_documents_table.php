@@ -13,12 +13,9 @@ return new class extends Migration {
         Schema::create('documents', function (Blueprint $table) {
             $table->id();
             $table->foreignId('employee_id')->constrained('employees')->onDelete('cascade');
-            $table->string('national_id')->nullable();
-            $table->string('passport')->nullable();
-            $table->string('resume')->nullable();
-            $table->string('educational_certificates')->nullable();
-            $table->string('experience_letters')->nullable();
-            $table->string('other_documents')->nullable();
+            $table->string('document_type')->nullable(); // Added document_type for clarity
+            $table->string('document_name')->nullable();
+            $table->string('document_path')->nullable();
 
             $table->softDeletes();
             $table->timestamps();
