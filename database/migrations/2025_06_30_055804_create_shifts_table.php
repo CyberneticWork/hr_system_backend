@@ -21,6 +21,7 @@ return new class extends Migration {
             $table->time('morning_ot_start')->nullable();
             $table->time('special_ot_start')->nullable();
             $table->time('late_deduction')->nullable();
+            $table->string('break_time')->nullable();
 
             $table->boolean('midnight_roster')->default(false);
             $table->decimal('nopay_hour_halfday', 4, 2)->nullable();
@@ -35,6 +36,7 @@ return new class extends Migration {
             $table->index('morning_ot_start');
             $table->index('special_ot_start');
             $table->index('late_deduction');
+         
         });
     }
 

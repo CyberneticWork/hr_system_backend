@@ -23,20 +23,17 @@ class ShiftController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'shift_code' => 'required|string|max:50|alpha_dash', // code, so probably alphanumeric or dashes/underscores
+            'shift_code' => 'required|string|max:50|alpha_dash|unique:shifts,shift_code',
             'shift_description' => 'required|string|max:255',
-
-            'start_time' => 'required|date_format:H:i', // e.g., 08:00
+            'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i',
-
             'morning_ot_start' => 'required|date_format:H:i',
             'special_ot_start' => 'required|date_format:H:i',
-
-            'late_deduction' => 'required|numeric|min:0', // assume minutes or hours as number
-
+            'late_deduction' => 'required|date_format:H:i',
             'midnight_roster' => 'required|boolean',
+            'nopay_hour_halfday' => 'required|numeric|min:0',
+            'break_time' => 'required|string|max:50', 
 
-            'nopay_hour_halfday' => 'required|numeric|min:0', // again assume numeric (hours)
         ]);
 
 
@@ -58,6 +55,8 @@ class ShiftController extends Controller
             'late_deduction' => $request->late_deduction,
             'midnight_roster' => $request->midnight_roster,
             'nopay_hour_halfday' => $request->nopay_hour_halfday,
+            'break_time' => $request->break_time,
+
         ]);
 
         return response()->json([
@@ -84,22 +83,18 @@ class ShiftController extends Controller
     public function update(Request $request, string $id)
     {
         $validator = Validator::make($request->all(), [
-            'shift_code' => 'required|string|max:50|alpha_dash', // code, so probably alphanumeric or dashes/underscores
+           
             'shift_description' => 'required|string|max:255',
-
-            'start_time' => 'required|date_format:H:i', // e.g., 08:00
+            'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i',
-
             'morning_ot_start' => 'required|date_format:H:i',
             'special_ot_start' => 'required|date_format:H:i',
-
-            'late_deduction' => 'required|numeric|min:0', // assume minutes or hours as number
-
+            'late_deduction' => 'required|date_format:H:i',
             'midnight_roster' => 'required|boolean',
-
-            'nopay_hour_halfday' => 'required|numeric|min:0', // again assume numeric (hours)
+            'nopay_hour_halfday' => 'required|numeric|min:0',
+            'break_time' => 'required|numeric|min:0',
+            
         ]);
-
 
         if ($validator->fails()) {
             return response()->json([
@@ -120,6 +115,7 @@ class ShiftController extends Controller
             'late_deduction' => $request->late_deduction,
             'midnight_roster' => $request->midnight_roster,
             'nopay_hour_halfday' => $request->nopay_hour_halfday,
+            'break_time' => $request->break_time,
         ]);
 
         return response()->json([
