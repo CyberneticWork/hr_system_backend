@@ -40,12 +40,12 @@ class employee extends Model
 
     public function spouse()
     {
-        return $this->belongsTo(Spouse::class);
+        return $this->belongsTo(spouse::class);
     }
 
     public function children()
     {
-        return $this->hasMany(Children::class);
+        return $this->hasMany(children::class);
     }
 
     public function contactDetail()
