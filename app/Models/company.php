@@ -44,4 +44,9 @@ class company extends Model
         return $this->hasMany(leaveCalendar::class, 'company_id');
     }
 
+    // Relationship: company → rosters
+    public function rosters()
+    {
+        return $this->hasMany(roster::class);
+    }
 }
