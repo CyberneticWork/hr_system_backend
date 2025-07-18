@@ -26,14 +26,14 @@ class departments extends Model
         return $this->belongsTo(company::class, 'company_id');
     }
 
-    // Optional: If you have subdepartments
-    public function subdepartments()
-    {
-        return $this->hasMany(sub_departments::class, 'department_id');
-    }
     public function leaveCalendars(): HasMany
     {
         return $this->hasMany(leaveCalendar::class);
     }
 
+    // Optional: If you have subdepartments
+    public function subdepartments()
+    {
+        return $this->hasMany(sub_departments::class, 'department_id');
+    }
 }

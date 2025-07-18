@@ -1,8 +1,7 @@
 <?php
 namespace App\Http\Controllers;
 
-use App\Models\Allowances;
-use App\Models\Department;
+use App\Models\allowances;
 use App\Models\departments;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -71,7 +70,7 @@ class AllowancesController extends Controller
 
         // Prepare data based on allowance type
         $data = $validator->validated();
-        
+
         if ($data['allowance_type'] === 'fixed') {
             $data['variable_from'] = null;
             $data['variable_to'] = null;
@@ -155,7 +154,7 @@ class AllowancesController extends Controller
 
         // Prepare data based on allowance type
         $data = $validator->validated();
-        
+
         if ($data['allowance_type'] === 'fixed') {
             $data['variable_from'] = null;
             $data['variable_to'] = null;
