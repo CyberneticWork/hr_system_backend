@@ -11,8 +11,8 @@ class documents extends Model
 
     protected $fillable = [
         'employee_id',
-        'document_path',
+        'document_type',
         'document_name',
-        'uploaded_at'
+        'document_path',
     ];
 }

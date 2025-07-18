@@ -31,4 +31,9 @@ class departments extends Model
     {
         return $this->hasMany(sub_departments::class, 'department_id');
     }
+    public function leaveCalendars(): HasMany
+    {
+        return $this->hasMany(leaveCalendar::class);
+    }
+
 }

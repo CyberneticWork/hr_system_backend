@@ -58,3 +58,15 @@ Content-Type: application/json
     "endDate": "2026-12-31"
 }
 
+### add leave calender
+GET http://127.0.0.1:8000/api/leave-calendars
+Content-Type: application/json
+
+{
+    "department_id": 2,
+    "company_id": 1,
+    "leave_type": "Annual Leave",
+    "reason": "Vacation",
+    "start_date": "2023-12-01",
+    "end_date": "2023-12-10"
+}

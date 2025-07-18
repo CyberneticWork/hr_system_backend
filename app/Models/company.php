@@ -38,4 +38,10 @@ class company extends Model
             'id' // Local key on organization_assignments
         );
     }
+    // Relationship: company → leave_calendars
+    public function leaveCalendars()
+    {
+        return $this->hasMany(leaveCalendar::class, 'company_id');
+    }
+
 }
