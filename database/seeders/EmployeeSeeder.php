@@ -103,12 +103,12 @@ class EmployeeSeeder extends Seeder
         $designations = [1, 2, 3, 4, 5];
 
         // Sri Lankan names for realism
-        $firstNamesMale = ['Isuru', 'Dinesh', 'Kamal', 'Nimal', 'Sunil', 'Amal', 'Chamara', 'Prasanna', 'Ruwan', 'Sampath'];
-        $firstNamesFemale = ['Tharushi', 'Nadeesha', 'Kumari', 'Sandamali', 'Chamari', 'Shanika', 'Dilini', 'Pabodha', 'Manori', 'Iresha'];
-        $lastNames = ['Perera', 'Fernando', 'Bandara', 'Silva', 'Ratnayake', 'Wickramasinghe', 'Jayawardena', 'Dissanayake', 'Gunawardena', 'Weerasinghe'];
+        $firstNamesMale = ['Isuru', 'Janitha', 'Eshan', 'Thushara', 'Esala', 'Kavinda', 'Imesha', 'Azeem', 'Jude', 'Pradeep'];
+        $firstNamesFemale = ['Rushini', 'Udari', 'Thilini', 'Kavithma', 'Pawani', 'Chinthani', 'Oshini', 'Shashini', 'Nethmi', 'Iresha'];
+        $lastNames = ['Bandara', 'Sandaruwan', 'Dananjaya', 'Gunawardane', 'Rupasinghe', 'Wickramasinghe', 'Jayawardena', 'Dissanayake', 'Jaaliya', 'Ranaweera'];
 
         // Generate 30 employees
-        for ($i = 1; $i <= 30; $i++) {
+        for ($i = 1; $i <= 300; $i++) {
             $gender = $genders[array_rand($genders)];
             $title = $gender === 'male' ? $titles[0] : (rand(0, 1) ? $titles[1] : $titles[2]);
 
