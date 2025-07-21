@@ -32,7 +32,7 @@ class ShiftController extends Controller
             'late_deduction' => 'required|date_format:H:i',
             'midnight_roster' => 'required|boolean',
             'nopay_hour_halfday' => 'required|numeric|min:0',
-            'break_time' => 'required|string|max:50', 
+            'break_time' => 'required|numeric|min:0',
 
         ]);
 
