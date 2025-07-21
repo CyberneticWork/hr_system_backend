@@ -108,7 +108,7 @@ class EmployeeSeeder extends Seeder
         $lastNames = ['Bandara', 'Sandaruwan', 'Dananjaya', 'Gunawardane', 'Rupasinghe', 'Wickramasinghe', 'Jayawardena', 'Dissanayake', 'Jaaliya', 'Ranaweera'];
 
         // Generate 30 employees
-        for ($i = 1; $i <= 300; $i++) {
+        for ($i = 1; $i <= 500; $i++) {
             $gender = $genders[array_rand($genders)];
             $title = $gender === 'male' ? $titles[0] : (rand(0, 1) ? $titles[1] : $titles[2]);
 
@@ -186,6 +186,11 @@ class EmployeeSeeder extends Seeder
                 'permanent_address' => rand(1, 999) . ' Main St, ' . ['Colombo', 'Kandy', 'Galle', 'Matara', 'Negombo', 'Kurunegala'][array_rand([0, 1, 2, 3, 4, 5])],
                 'mobile_line' => $mobilePrefixes[array_rand($mobilePrefixes)] . rand(1000000, 9999999),
                 'email' => strtolower(str_replace(' ', '.', $fullName)) . '@' . ['abc.com', 'xyz.com', 'techsol.com', 'globalent.com'][$companyId - 1],
+                'emg_relationship' => 'Friend',
+                'emg_name' => $firstNamesMale[array_rand($firstNamesMale)] . ' ' . $lastNames[array_rand($lastNames)],
+                'emg_tel' => $mobilePrefixes[array_rand($mobilePrefixes)] . rand(1000000, 9999999),
+                'emg_address' => rand(1, 999) . ' Main St, ' . ['Colombo', 'Kandy', 'Galle', 'Matara', 'Negombo', 'Kurunegala'][array_rand([0, 1, 2, 3, 4, 5])],
+
             ]);
 
             // Create children for married employees
