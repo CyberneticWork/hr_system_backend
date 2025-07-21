@@ -40,8 +40,8 @@ class ApiDataController extends Controller
             return [
                 'id' => $dept->id,
                 'name' => $dept->name,
-                // 'code' => null, 
-                // 'manager' => null, 
+                // 'code' => null,
+                // 'manager' => null,
                 'employees' => $employeeCount,
                 'company_id' => $dept->company_id,
                 'company_name' => $dept->company ? $dept->company->name : null,
@@ -64,7 +64,7 @@ class ApiDataController extends Controller
             return [
                 'id' => $sub->id,
                 'name' => $sub->name,
-                // 'manager' => null, 
+                // 'manager' => null,
                 'employees' => $employeeCount,
                 'department_id' => $sub->department_id,
                 'department_name' => $sub->department ? $sub->department->name : null,
@@ -98,4 +98,18 @@ class ApiDataController extends Controller
         return response()->json($subDepartment, 200);
     }
 
+    //get employee based on sub department
+    public function employeesBySubDepartment($id)
+    {
+        $subDepartment = sub_departments::find($id);
+        if (!$subDepartment) {
+            return response()->json(['message' => 'Sub-department not found'], 404);
+        }
+
+        $employees = employee::whereHas('organizationAssignment', function ($query) use ($id) {
+            $query->where('sub_department_id', $id);
+        })->get(['id', 'full_name']);
+
+        return response()->json($employees, 200);
+    }
 }
