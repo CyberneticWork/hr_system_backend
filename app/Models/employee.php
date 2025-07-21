@@ -35,7 +35,7 @@ class employee extends Model
 
     public function organizationAssignment()
     {
-        return $this->belongsTo(organization_assignment::class);
+        return $this->belongsTo(organization_assignment::class, 'organization_assignment_id');
     }
 
     public function spouse()

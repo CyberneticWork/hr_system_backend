@@ -16,6 +16,7 @@ use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\DepartmentsController;
 use App\Http\Controllers\SubDepartmentsController;
 use App\Http\Controllers\RosterController;
+use App\Http\Controllers\TimeCardController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -47,6 +48,7 @@ Route::apiResource('companies', CompanyController::class);
 Route::apiResource('departments', DepartmentsController::class)->only(['store', 'update', 'destroy']);
 Route::apiResource('subdepartments', SubDepartmentsController::class);
 Route::apiResource('rosters', RosterController::class);
+Route::get('/time-cards', [TimeCardController::class, 'index']);
 
 Route::prefix('apiData')->group(function () {
     Route::get('/companies', [ApiDataController::class, 'companies']);
