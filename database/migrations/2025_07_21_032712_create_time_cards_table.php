@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('employee_id')->constrained('employees')->onDelete('cascade')->nullable();
             $table->time('time')->nullable();
             $table->date('date')->nullable();
+            $table->string('working_hours')->nullable();
             $table->string('entry')->nullable();
             $table->string('status')->nullable();
             $table->timestamps();
