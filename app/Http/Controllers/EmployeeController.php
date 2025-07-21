@@ -25,11 +25,14 @@ class EmployeeController extends Controller
         return response()->json($employees, 200);
     }
 
-    public function getEmployeesForTable()
+    public function getEmployeesForTable(Request $request)
     {
+        $perPage = $request->input('per_page', 10); // Default to 10 items per page
+        $page = $request->input('page', 1); // Default to page 1
+
         return Employee::with([
-            'employmentType:id,name',  // Only get id and name
-            'contactDetail:id,employee_id,email,mobile_line'  // Only these fields
+            'employmentType:id,name',
+            'contactDetail:id,employee_id,email,mobile_line'
         ])->select([
                     'id',
                     'full_name',
@@ -40,7 +43,7 @@ class EmployeeController extends Controller
                     'attendance_employee_no',
                     'is_active',
                     'employment_type_id'
-                ])->get();
+                ])->paginate($perPage, ['*'], 'page', $page);
     }
 
 
@@ -441,6 +444,46 @@ class EmployeeController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        DB::beginTransaction();
+
+        try {
+            $employee = Employee::findOrFail($id);
+
+            // Delete profile picture if exists
+            if ($employee->profile_photo_path && Storage::disk('public')->exists($employee->profile_photo_path)) {
+                Storage::disk('public')->delete($employee->profile_photo_path);
+            }
+
+            // Delete documents if any
+            // $employee->documents()->each(function ($document) {
+            //     if (Storage::disk('public')->exists($document->document_path)) {
+            //         Storage::disk('public')->delete($document->document_path);
+            //     }
+            // });
+
+            // Delete all related records
+            $employee->spouse()->delete();
+            $employee->children()->delete();
+            $employee->contactDetail()->delete();
+            // $employee->compensation()->delete();
+            $employee->organizationAssignment()->delete();
+            // $employee->documents()->delete();
+
+            // Finally delete the employee
+            $employee->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Employee deleted successfully'
+            ], 200);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Employee deletion failed',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 }
