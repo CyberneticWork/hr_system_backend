@@ -15,6 +15,7 @@ use App\Http\Controllers\LeaveCalenderController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\DepartmentsController;
 use App\Http\Controllers\SubDepartmentsController;
+use App\Http\Controllers\RosterController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -45,6 +46,7 @@ Route::apiResource('leave-calendars', LeaveCalenderController::class);
 Route::apiResource('companies', CompanyController::class);
 Route::apiResource('departments', DepartmentsController::class)->only(['store', 'update', 'destroy']);
 Route::apiResource('subdepartments', SubDepartmentsController::class);
+Route::apiResource('rosters', RosterController::class);
 
 Route::prefix('apiData')->group(function () {
     Route::get('/companies', [ApiDataController::class, 'companies']);

@@ -18,4 +18,10 @@ class sub_departments extends Model
     {
         return $this->belongsTo(departments::class, 'department_id');
     }
+
+    // Relationship: sub_department → rosters
+    public function rosters()
+    {
+        return $this->hasMany(roster::class);
+    }
 }

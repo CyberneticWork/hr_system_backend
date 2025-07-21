@@ -36,4 +36,10 @@ class departments extends Model
     {
         return $this->hasMany(sub_departments::class, 'department_id');
     }
+
+    // Relationship: department → rosters
+    public function rosters()
+    {
+        return $this->hasMany(roster::class);
+    }
 }
