@@ -444,6 +444,46 @@ class EmployeeController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        DB::beginTransaction();
+
+        try {
+            $employee = Employee::findOrFail($id);
+
+            // Delete profile picture if exists
+            if ($employee->profile_photo_path && Storage::disk('public')->exists($employee->profile_photo_path)) {
+                Storage::disk('public')->delete($employee->profile_photo_path);
+            }
+
+            // Delete documents if any
+            // $employee->documents()->each(function ($document) {
+            //     if (Storage::disk('public')->exists($document->document_path)) {
+            //         Storage::disk('public')->delete($document->document_path);
+            //     }
+            // });
+
+            // Delete all related records
+            $employee->spouse()->delete();
+            $employee->children()->delete();
+            $employee->contactDetail()->delete();
+            // $employee->compensation()->delete();
+            $employee->organizationAssignment()->delete();
+            // $employee->documents()->delete();
+
+            // Finally delete the employee
+            $employee->delete();
+
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Employee deleted successfully'
+            ], 200);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'Employee deletion failed',
+                'error' => $e->getMessage(),
+            ], 500);
+        }
     }
 }
