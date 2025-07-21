@@ -98,9 +98,9 @@ class EmployeeSeeder extends Seeder
         $titles = ['Mr', 'Mrs', 'Ms', 'Dr'];
         $genders = ['male', 'female'];
         $maritalStatuses = ['single', 'married', 'divorced', 'widowed'];
-        $employmentTypes = [1, 2, 3]; // Assuming these are valid employment type IDs
+        $employmentTypes = [1, 2, 3, 4];
         $daysOff = ['Sunday', 'Monday', 'Saturday'];
-        $designations = [1, 2, 3, 4, 5]; // Assuming these are valid designation IDs
+        $designations = [1, 2, 3, 4, 5];
 
         // Sri Lankan names for realism
         $firstNamesMale = ['Isuru', 'Dinesh', 'Kamal', 'Nimal', 'Sunil', 'Amal', 'Chamara', 'Prasanna', 'Ruwan', 'Sampath'];
