@@ -37,4 +37,8 @@ class organization_assignment extends Model
     {
         return $this->belongsTo(employee::class);
     }
+    public function department()
+    {
+        return $this->belongsTo(departments::class, 'department_id');
+    }
 }
