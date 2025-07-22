@@ -21,7 +21,16 @@ class EmployeeController extends Controller
      */
     public function index()
     {
-        $employees = employee::with(['employmentType', 'spouse', 'children', 'contactDetail', 'organizationAssignment'])->get();
+        $employees = employee::with([
+            'employmentType',
+            'spouse',
+            'children',
+            'contactDetail',
+            'organizationAssignment.company',
+            'organizationAssignment.department',
+            'organizationAssignment.subDepartment',
+            'organizationAssignment.designation'
+        ])->get();
         return response()->json($employees, 200);
     }
 
@@ -432,7 +441,10 @@ class EmployeeController extends Controller
             'spouse',
             'children',
             'contactDetail',
-            'organizationAssignment'
+            'organizationAssignment.company',
+            'organizationAssignment.department',
+            'organizationAssignment.subDepartment',
+            'organizationAssignment.designation'
         ])->findOrFail($id);
         return response()->json($employee, 200);
     }
