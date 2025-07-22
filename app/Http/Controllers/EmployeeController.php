@@ -57,7 +57,7 @@ class EmployeeController extends Controller
         // ], 410);
 
         $validator = Validator::make($request->all(), [
-            'profile_picture' => 'required|image|max:2048',
+            'profile_picture' => 'nullable|image|max:2048',
             'personal' => 'required|json',
             'address' => 'required|json',
             'compensation' => 'required|json',
