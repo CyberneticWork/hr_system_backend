@@ -27,10 +27,11 @@ class EmployeeController extends Controller
 
     public function getEmployeesForTable(Request $request)
     {
-        $perPage = $request->input('per_page', 10); // Default to 10 items per page
-        $page = $request->input('page', 1); // Default to page 1
+        $perPage = $request->input('per_page', 10);
+        $page = $request->input('page', 1);
+        $search = $request->input('search', '');
 
-        return Employee::with([
+        $query = Employee::with([
             'employmentType:id,name',
             'contactDetail:id,employee_id,email,mobile_line'
         ])->select([
@@ -42,8 +43,21 @@ class EmployeeController extends Controller
                     'title',
                     'attendance_employee_no',
                     'is_active',
-                    'employment_type_id'
-                ])->paginate($perPage, ['*'], 'page', $page);
+                    'employment_type_id',
+                    'nic'
+                ]);
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('full_name', 'like', "%{$search}%")
+                    ->orWhere('id', 'like', "%{$search}%")
+                    ->orWhere('epf', 'like', "%{$search}%")
+                    ->orWhere('attendance_employee_no', 'like', "%{$search}%")
+                    ->orWhere('nic', 'like', "%{$search}%");
+            });
+        }
+
+        return $query->paginate($perPage, ['*'], 'page', $page);
     }
 
 
