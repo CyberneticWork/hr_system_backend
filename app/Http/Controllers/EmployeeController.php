@@ -69,6 +69,37 @@ class EmployeeController extends Controller
         return $query->paginate($perPage, ['*'], 'page', $page);
     }
 
+    public function search(Request $request)
+    {
+        $search = $request->input('search', '');
+
+        $query = Employee::query()
+            ->select([
+                'id',
+                'full_name',
+                'name_with_initials',
+                'profile_photo_path',
+                'epf',
+                'attendance_employee_no',
+                'nic'
+            ])
+            ->limit(10);
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('full_name', 'like', "%{$search}%")
+                    ->orWhere('id', 'like', "%{$search}%")
+                    ->orWhere('epf', 'like', "%{$search}%")
+                    ->orWhere('attendance_employee_no', 'like', "%{$search}%")
+                    ->orWhere('nic', 'like', "%{$search}%");
+            });
+        }
+
+        return response()->json($query->get());
+    }
+
+
+
 
     /**
      * Store a newly created resource in storage.
@@ -512,4 +543,6 @@ class EmployeeController extends Controller
             ], 500);
         }
     }
+
+
 }
