@@ -73,3 +73,4 @@ Route::post('/resignations/{id}/documents', [ResignationController::class, 'uplo
 Route::delete('/resignations/{resignationId}/documents/{documentId}', [ResignationController::class, 'destroyDocument']);
 Route::get('/employees/by-nic/{nic}', [EmployeeController::class, 'getByNic']);
 Route::post('/time-cards', [TimeCardController::class, 'store']);
+Route::post('/attendance', [TimeCardController::class, 'attendance']);
