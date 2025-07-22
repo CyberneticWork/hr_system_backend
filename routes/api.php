@@ -59,7 +59,7 @@ Route::prefix('apiData')->group(function () {
     Route::get('/companies/{id}', [ApiDataController::class, 'companiesById']);
     Route::get('/departments/{id}', [ApiDataController::class, 'departmentsById']);
     Route::get('/subDepartments/{id}', [ApiDataController::class, 'subDepartmentsById']);
-
+    Route::get('/subDepartments/{id}/employees', [ApiDataController::class, 'employeesBySubDepartment']);
 });
 
 // Resignation routes
