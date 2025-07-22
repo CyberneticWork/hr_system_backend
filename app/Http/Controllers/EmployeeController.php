@@ -486,4 +486,24 @@ class EmployeeController extends Controller
             ], 500);
         }
     }
+    public function getByNic($nic)
+    {
+        $employee = employee::with(['organizationAssignment.department'])
+            ->whereRaw('LOWER(nic) = ?', [strtolower($nic)])
+            ->first();
+
+        if (!$employee) {
+            return response()->json(['message' => 'Employee not found'], 404);
+        }
+
+        return response()->json([
+            'id' => $employee->id,
+            'attendance_employee_no' => $employee->attendance_employee_no,
+            'full_name' => $employee->full_name,
+            'department' => $employee->organizationAssignment && $employee->organizationAssignment->department
+                ? $employee->organizationAssignment->department->name
+                : null,
+            // Add other fields as needed
+        ]);
+    }
 }
