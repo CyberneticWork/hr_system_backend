@@ -17,6 +17,7 @@ use App\Http\Controllers\DepartmentsController;
 use App\Http\Controllers\SubDepartmentsController;
 use App\Http\Controllers\RosterController;
 use App\Http\Controllers\TimeCardController;
+use App\Http\Controllers\LeaveMasterController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -49,7 +50,10 @@ Route::apiResource('companies', CompanyController::class);
 Route::apiResource('departments', DepartmentsController::class)->only(['store', 'update', 'destroy']);
 Route::apiResource('subdepartments', SubDepartmentsController::class);
 Route::apiResource('rosters', RosterController::class);
+Route::apiResource('leave-masters', LeaveMasterController::class);
+Route::get('/Leave-Master/{employeeId}/counts', [LeaveMasterController::class, 'getLeaveRecordCountsByEmployee']);
 Route::get('/time-cards', [TimeCardController::class, 'index']);
+
 
 Route::prefix('apiData')->group(function () {
     Route::get('/companies', [ApiDataController::class, 'companies']);

@@ -58,5 +58,10 @@ class employee extends Model
     {
         return $this->hasMany(roster::class);
     }
+    //relation to leave master
+    public function leaveMasters()
+    {
+        return $this->hasMany(leave_master::class);
+    }
 
 }
