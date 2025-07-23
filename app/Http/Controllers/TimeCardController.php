@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\over_time;
 use App\Models\time_card;
 use App\Models\employee;
 use App\Models\roster;
@@ -68,6 +69,21 @@ class TimeCardController extends Controller
             'entry' => $validated['entry'],
             'status' => $validated['status'],
         ]);
+
+        if ($validated['status'] == "OUT") {
+            $employee = employee::find($validated['employee_id']);
+            $shift_code = $employee->rosters[0]->shift_code ?? null;
+            $shift = shifts::find($shift_code);
+            $shift_duration = $shift ? Carbon::parse($shift->start_time)->diffInHours(Carbon::parse($shift->end_time)) : null;
+            $ot_time = ($working_hours - $shift_duration) - 1 ;
+
+            $over_time = over_time::create([
+                'employee_id' => $validated['employee_id'],
+                'shift_code' => $shift_code,
+                'time_cards_id' => $timeCard->id,
+                'ot_hours' => $ot_time,
+            ]);
+        }
 
         return response()->json($timeCard, 201);
     }

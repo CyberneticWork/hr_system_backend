@@ -29,7 +29,8 @@ class EmployeeController extends Controller
             'organizationAssignment.company',
             'organizationAssignment.department',
             'organizationAssignment.subDepartment',
-            'organizationAssignment.designation'
+            'organizationAssignment.designation',
+            'rosters',
         ])->get();
         return response()->json($employees, 200);
     }
@@ -475,7 +476,8 @@ class EmployeeController extends Controller
             'organizationAssignment.company',
             'organizationAssignment.department',
             'organizationAssignment.subDepartment',
-            'organizationAssignment.designation'
+            'organizationAssignment.designation',
+            'rosters',
         ])->findOrFail($id);
         return response()->json($employee, 200);
     }
