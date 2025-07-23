@@ -1,22 +1,23 @@
 <?php
 
-use App\Http\Controllers\ApiDataController;
-use App\Http\Controllers\EmployeeController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\LoanController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ShiftController;
-use App\Http\Controllers\LoanController;
+use App\Http\Controllers\RosterController;
+use App\Http\Controllers\ApiDataController;
+use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\OvertimeController;
+use App\Http\Controllers\TimeCardController;
 use App\Http\Controllers\DeductionController;
 use App\Http\Controllers\AllowancesController;
+use App\Http\Controllers\DepartmentsController;
 use App\Http\Controllers\ResignationController;
 use App\Http\Controllers\LeaveCalenderController;
-use App\Http\Controllers\CompanyController;
-use App\Http\Controllers\DepartmentsController;
 use App\Http\Controllers\SubDepartmentsController;
-use App\Http\Controllers\RosterController;
-use App\Http\Controllers\TimeCardController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -49,6 +50,7 @@ Route::apiResource('companies', CompanyController::class);
 Route::apiResource('departments', DepartmentsController::class)->only(['store', 'update', 'destroy']);
 Route::apiResource('subdepartments', SubDepartmentsController::class);
 Route::apiResource('rosters', RosterController::class);
+Route::apiResource('overtime', OvertimeController::class);
 Route::get('/time-cards', [TimeCardController::class, 'index']);
 
 Route::prefix('apiData')->group(function () {

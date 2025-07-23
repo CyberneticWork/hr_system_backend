@@ -15,4 +15,17 @@ class over_time extends Model
         'time_cards_id',
         'ot_hours',
     ];
+
+    public function employee()
+    {
+        return $this->belongsTo(employee::class);
+    }
+    public function shift()
+    {
+        return $this->belongsTo(shifts::class, 'shift_code', 'id');
+    }
+    public function timeCard()
+    {
+        return $this->belongsTo(time_card::class, 'time_cards_id', 'id');
+    }
 }
