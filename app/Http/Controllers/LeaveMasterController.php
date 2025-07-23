@@ -16,7 +16,7 @@ class LeaveMasterController extends Controller
      */
     public function index()
     {
-        $leaveMasters = leave_master::with('employee')->get();
+        $leaveMasters = leave_master::with('employee', )->get();
         return response()->json($leaveMasters);
     }
 
@@ -106,4 +106,23 @@ class LeaveMasterController extends Controller
         return response()->json($leaveCounts);
     }
 
+    // Get leave recodes that the ststus = 'Pending'
+    public function getPendingLeaveRecords()
+    {
+        $pendingLeaves = leave_master::where('status', 'Pending')->get();
+        return response()->json($pendingLeaves);
+    }
+
+    // Get leave recodes that the ststus = 'Approved'
+    public function getApprovedLeaveRecords()
+    {
+        $approvedLeaves = leave_master::where('status', 'Approved')->get();
+        return response()->json($approvedLeaves);
+    }
+    // Get leave recodes that the ststus = 'HR_Approved'
+    // public function getHRApprovedLeaveRecords()
+    // {
+    //     $hrApprovedLeaves = leave_master::where('status', 'HR_Approved')->get();
+    //     return response()->json($hrApprovedLeaves);
+    // }
 }
