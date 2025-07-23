@@ -21,16 +21,26 @@ class EmployeeController extends Controller
      */
     public function index()
     {
-        $employees = employee::with(['employmentType', 'spouse', 'children', 'contactDetail', 'organizationAssignment'])->get();
+        $employees = employee::with([
+            'employmentType',
+            'spouse',
+            'children',
+            'contactDetail',
+            'organizationAssignment.company',
+            'organizationAssignment.department',
+            'organizationAssignment.subDepartment',
+            'organizationAssignment.designation'
+        ])->get();
         return response()->json($employees, 200);
     }
 
     public function getEmployeesForTable(Request $request)
     {
-        $perPage = $request->input('per_page', 10); // Default to 10 items per page
-        $page = $request->input('page', 1); // Default to page 1
+        $perPage = $request->input('per_page', 10);
+        $page = $request->input('page', 1);
+        $search = $request->input('search', '');
 
-        return Employee::with([
+        $query = Employee::with([
             'employmentType:id,name',
             'contactDetail:id,employee_id,email,mobile_line'
         ])->select([
@@ -42,9 +52,53 @@ class EmployeeController extends Controller
                     'title',
                     'attendance_employee_no',
                     'is_active',
-                    'employment_type_id'
-                ])->paginate($perPage, ['*'], 'page', $page);
+                    'employment_type_id',
+                    'nic'
+                ]);
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('full_name', 'like', "%{$search}%")
+                    ->orWhere('id', 'like', "%{$search}%")
+                    ->orWhere('epf', 'like', "%{$search}%")
+                    ->orWhere('attendance_employee_no', 'like', "%{$search}%")
+                    ->orWhere('nic', 'like', "%{$search}%");
+            });
+        }
+
+        return $query->paginate($perPage, ['*'], 'page', $page);
     }
+
+    public function search(Request $request)
+    {
+        $search = $request->input('search', '');
+
+        $query = Employee::query()
+            ->select([
+                'id',
+                'full_name',
+                'name_with_initials',
+                'profile_photo_path',
+                'epf',
+                'attendance_employee_no',
+                'nic'
+            ])
+            ->limit(10);
+
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('full_name', 'like', "%{$search}%")
+                    ->orWhere('id', 'like', "%{$search}%")
+                    ->orWhere('epf', 'like', "%{$search}%")
+                    ->orWhere('attendance_employee_no', 'like', "%{$search}%")
+                    ->orWhere('nic', 'like', "%{$search}%");
+            });
+        }
+
+        return response()->json($query->get());
+    }
+
+
 
 
     /**
@@ -57,7 +111,7 @@ class EmployeeController extends Controller
         // ], 410);
 
         $validator = Validator::make($request->all(), [
-            'profile_picture' => 'required|image|max:2048',
+            'profile_picture' => 'nullable|image|max:2048',
             'personal' => 'required|json',
             'address' => 'required|json',
             'compensation' => 'required|json',
@@ -418,7 +472,10 @@ class EmployeeController extends Controller
             'spouse',
             'children',
             'contactDetail',
-            'organizationAssignment'
+            'organizationAssignment.company',
+            'organizationAssignment.department',
+            'organizationAssignment.subDepartment',
+            'organizationAssignment.designation'
         ])->findOrFail($id);
         return response()->json($employee, 200);
     }
@@ -485,5 +542,27 @@ class EmployeeController extends Controller
                 'error' => $e->getMessage(),
             ], 500);
         }
+    }
+
+
+    public function getByNic($nic)
+    {
+        $employee = employee::with(['organizationAssignment.department'])
+            ->whereRaw('LOWER(nic) = ?', [strtolower($nic)])
+            ->first();
+
+        if (!$employee) {
+            return response()->json(['message' => 'Employee not found'], 404);
+        }
+
+        return response()->json([
+            'id' => $employee->id,
+            'attendance_employee_no' => $employee->attendance_employee_no,
+            'full_name' => $employee->full_name,
+            'department' => $employee->organizationAssignment && $employee->organizationAssignment->department
+                ? $employee->organizationAssignment->department->name
+                : null,
+            // Add other fields as needed
+        ]);
     }
 }

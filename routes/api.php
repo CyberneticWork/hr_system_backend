@@ -40,6 +40,7 @@ Route::apiResource('users', UserController::class);
 Route::apiResource('shifts', ShiftController::class);
 Route::apiResource('employees', EmployeeController::class);
 Route::get('/emp/table', [EmployeeController::class, 'getEmployeesForTable']);
+Route::get('/emp/search', [EmployeeController::class, 'search']);
 Route::apiResource('loans', LoanController::class);
 Route::apiResource('allowances', AllowancesController::class);
 Route::apiResource('deductions', DeductionController::class);
@@ -71,3 +72,6 @@ Route::put('/resignations/{id}/status', [ResignationController::class, 'updateSt
 // Document routes
 Route::post('/resignations/{id}/documents', [ResignationController::class, 'uploadDocuments']);
 Route::delete('/resignations/{resignationId}/documents/{documentId}', [ResignationController::class, 'destroyDocument']);
+Route::get('/employees/by-nic/{nic}', [EmployeeController::class, 'getByNic']);
+Route::post('/time-cards', [TimeCardController::class, 'store']);
+Route::post('/attendance', [TimeCardController::class, 'attendance']);
