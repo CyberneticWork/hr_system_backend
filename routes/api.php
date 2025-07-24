@@ -1,22 +1,25 @@
 <?php
 
-use App\Http\Controllers\ApiDataController;
-use App\Http\Controllers\EmployeeController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\LoanController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ShiftController;
-use App\Http\Controllers\LoanController;
+use App\Http\Controllers\RosterController;
+use App\Http\Controllers\ApiDataController;
+use App\Http\Controllers\CompanyController;
+use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\OvertimeController;
+use App\Http\Controllers\TimeCardController;
 use App\Http\Controllers\DeductionController;
 use App\Http\Controllers\AllowancesController;
+use App\Http\Controllers\DepartmentsController;
 use App\Http\Controllers\ResignationController;
 use App\Http\Controllers\LeaveCalenderController;
-use App\Http\Controllers\CompanyController;
-use App\Http\Controllers\DepartmentsController;
 use App\Http\Controllers\SubDepartmentsController;
-use App\Http\Controllers\RosterController;
-use App\Http\Controllers\TimeCardController;
+use App\Http\Controllers\LeaveMasterController;
+use App\Http\Controllers\NoPayController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -49,7 +52,16 @@ Route::apiResource('companies', CompanyController::class);
 Route::apiResource('departments', DepartmentsController::class)->only(['store', 'update', 'destroy']);
 Route::apiResource('subdepartments', SubDepartmentsController::class);
 Route::apiResource('rosters', RosterController::class);
+Route::apiResource('overtime', OvertimeController::class);
+Route::apiResource('leave-masters', LeaveMasterController::class);
+Route::get('/Leave-Master/{employeeId}/counts', [LeaveMasterController::class, 'getLeaveRecordCountsByEmployee']);
+
+Route::get('/Leave-Master/status/pending', [LeaveMasterController::class, 'getPendingLeaveRecords']);
+Route::get('/Leave-Master/status/approved', [LeaveMasterController::class, 'getApprovedLeaveRecords']);
+Route::get('/Leave-Master/status/hr-approved', [LeaveMasterController::class, 'getHRApprovedLeaveRecords']);
+
 Route::get('/time-cards', [TimeCardController::class, 'index']);
+
 
 Route::prefix('apiData')->group(function () {
     Route::get('/companies', [ApiDataController::class, 'companies']);
@@ -75,3 +87,11 @@ Route::delete('/resignations/{resignationId}/documents/{documentId}', [Resignati
 Route::get('/employees/by-nic/{nic}', [EmployeeController::class, 'getByNic']);
 Route::post('/time-cards', [TimeCardController::class, 'store']);
 Route::post('/attendance', [TimeCardController::class, 'attendance']);
+
+    Route::get('no-pay-records', [NoPayController::class, 'index']);
+    Route::post('no-pay-records', [NoPayController::class, 'store']);
+    Route::put('no-pay-records/{id}', [NoPayController::class, 'update']);
+    Route::delete('no-pay-records/{id}', [NoPayController::class, 'destroy']);
+    Route::post('no-pay-records/generate', [NoPayController::class, 'generateDailyNoPayRecords']);
+    Route::get('no-pay-records/stats', [NoPayController::class, 'getNoPayStats']);
+
