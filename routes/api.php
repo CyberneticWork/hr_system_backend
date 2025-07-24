@@ -72,6 +72,11 @@ Route::put('/resignations/{id}/status', [ResignationController::class, 'updateSt
 // Document routes
 Route::post('/resignations/{id}/documents', [ResignationController::class, 'uploadDocuments']);
 Route::delete('/resignations/{resignationId}/documents/{documentId}', [ResignationController::class, 'destroyDocument']);
+
+//time card
+Route::put('/time-cards/{id}', [TimeCardController::class, 'update']);
+Route::delete('/time-cards/{id}', [TimeCardController::class, 'destroy']);
 Route::get('/employees/by-nic/{nic}', [EmployeeController::class, 'getByNic']);
 Route::post('/time-cards', [TimeCardController::class, 'store']);
 Route::post('/attendance', [TimeCardController::class, 'attendance']);
+Route::post('/attendance/mark-absentees', [TimeCardController::class, 'markAbsentees']);
