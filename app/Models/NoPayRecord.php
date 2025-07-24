@@ -5,23 +5,17 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class leave_master extends Model
+class NoPayRecord extends Model
 {
     use SoftDeletes;
 
     protected $fillable = [
         'employee_id',
-        'reporting_date',
-        'leave_type',
-        'leave_date',
-        'leave_from',
-        'leave_to',
-        'period',
-        'leave_duration',
-        'cancel_from',
-        'cancel_to',
-        'reason',
-        'status'
+        'date',
+        'no_pay_count',
+        'description',
+        'status',
+        'processed_by'
     ];
 
     public function employee()
@@ -29,4 +23,9 @@ class leave_master extends Model
         return $this->belongsTo(Employee::class);
     }
 
+    public function processedBy()
+    {
+        return $this->belongsTo(User::class, 'processed_by');
+    }
 }
+
