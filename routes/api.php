@@ -20,6 +20,7 @@ use App\Http\Controllers\LeaveCalenderController;
 use App\Http\Controllers\SubDepartmentsController;
 use App\Http\Controllers\LeaveMasterController;
 use App\Http\Controllers\NoPayController;
+use App\Http\Controllers\SalaryProcessController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -54,6 +55,7 @@ Route::apiResource('subdepartments', SubDepartmentsController::class);
 Route::apiResource('rosters', RosterController::class);
 Route::apiResource('overtime', OvertimeController::class);
 Route::apiResource('leave-masters', LeaveMasterController::class);
+Route::apiResource('salary-process', SalaryProcessController::class);
 Route::get('/Leave-Master/{employeeId}/counts', [LeaveMasterController::class, 'getLeaveRecordCountsByEmployee']);
 
 Route::get('/Leave-Master/status/pending', [LeaveMasterController::class, 'getPendingLeaveRecords']);
@@ -84,6 +86,10 @@ Route::put('/resignations/{id}/status', [ResignationController::class, 'updateSt
 // Document routes
 Route::post('/resignations/{id}/documents', [ResignationController::class, 'uploadDocuments']);
 Route::delete('/resignations/{resignationId}/documents/{documentId}', [ResignationController::class, 'destroyDocument']);
+
+//time card
+Route::put('/time-cards/{id}', [TimeCardController::class, 'update']);
+Route::delete('/time-cards/{id}', [TimeCardController::class, 'destroy']);
 Route::get('/employees/by-nic/{nic}', [EmployeeController::class, 'getByNic']);
 Route::post('/time-cards', [TimeCardController::class, 'store']);
 Route::post('/attendance', [TimeCardController::class, 'attendance']);
@@ -95,3 +101,4 @@ Route::post('/attendance', [TimeCardController::class, 'attendance']);
     Route::post('no-pay-records/generate', [NoPayController::class, 'generateDailyNoPayRecords']);
     Route::get('no-pay-records/stats', [NoPayController::class, 'getNoPayStats']);
 
+Route::post('/attendance/mark-absentees', [TimeCardController::class, 'markAbsentees']);

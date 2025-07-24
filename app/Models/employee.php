@@ -53,6 +53,11 @@ class employee extends Model
         return $this->hasOne(contact_detail::class);
     }
 
+     public function compensation()
+    {
+        return $this->hasOne(compensation::class);
+    }
+
     //relation to roster
     public function rosters()
     {

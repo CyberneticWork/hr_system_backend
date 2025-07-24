@@ -12,6 +12,8 @@ return new class extends Migration {
     {
         Schema::create('rosters', function (Blueprint $table) {
             $table->id();
+            $table->string('roster_id'); // e.g., daily, weekly, monthly
+
             $table->foreignId('shift_code')->constrained('shifts')->onDelete('cascade');
 
             //Organizational hierarchy for assignment scope
