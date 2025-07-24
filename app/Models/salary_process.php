@@ -25,4 +25,36 @@ class salary_process extends Model
         'status',
         'processed_by'
     ];
+
+    public function employee()
+    {
+        return $this->belongsTo(employee::class);
+    }
+
+    public function noPayRecord()
+    {
+        return $this->belongsTo(NoPayRecord::class, 'no_pay_records_id');
+    }
+
+    public function overTime()
+    {
+        return $this->belongsTo(over_time::class, 'over_times_id');
+    }
+
+    public function allowance()
+    {
+        return $this->belongsTo(allowances::class, 'allowances_id');
+    }
+
+    public function loan()
+    {
+        return $this->belongsTo(loans::class, 'loans_id');
+    }
+
+    public function deduction()
+    {
+        return $this->belongsTo(deduction::class, 'deductions_id');
+    }
+
+
 }

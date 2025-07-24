@@ -17,10 +17,10 @@ return new class extends Migration {
             $table->decimal('basic', 10, 2);
             $table->decimal('basic_salary', 10, 2);
 
-            $table->foreignId('no_pay_records_id')->constrained('no_pay_records')->onDelete('cascade');
+            $table->foreignId('no_pay_records_id')->nullable()->constrained('no_pay_records')->onDelete('cascade');
             $table->foreignId('over_times_id')->constrained('over_times')->onDelete('cascade');
             $table->foreignId('allowances_id')->constrained('allowances')->onDelete('cascade');
-            $table->foreignId('loans_id')->constrained('loans')->onDelete('cascade')->nullable();
+            $table->foreignId('loans_id')->nullable()->constrained('loans')->onDelete('cascade');
             $table->foreignId('deductions_id')->constrained('deductions')->onDelete('cascade')->nullable();
 
 
