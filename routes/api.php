@@ -55,6 +55,11 @@ Route::apiResource('rosters', RosterController::class);
 Route::apiResource('overtime', OvertimeController::class);
 Route::apiResource('leave-masters', LeaveMasterController::class);
 Route::get('/Leave-Master/{employeeId}/counts', [LeaveMasterController::class, 'getLeaveRecordCountsByEmployee']);
+
+Route::get('/Leave-Master/status/pending', [LeaveMasterController::class, 'getPendingLeaveRecords']);
+Route::get('/Leave-Master/status/approved', [LeaveMasterController::class, 'getApprovedLeaveRecords']);
+Route::get('/Leave-Master/status/hr-approved', [LeaveMasterController::class, 'getHRApprovedLeaveRecords']);
+
 Route::get('/time-cards', [TimeCardController::class, 'index']);
 
 
