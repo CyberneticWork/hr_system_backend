@@ -11,6 +11,7 @@ class roster extends Model
 
     protected $fillable = [
         'shift_code',
+        'roster_id',
         'company_id',
         'department_id',
         'sub_department_id',
