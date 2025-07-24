@@ -14,29 +14,20 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('employee_id')->constrained('employees')->onDelete('cascade');
 
-            $table->string('attendance_no')->nullable();
-            $table->string('epf_no')->nullable();
-            $table->string('employee_name')->nullable();
-            $table->string('department')->nullable();
-
-            $table->date('join_date')->nullable();
             $table->date('reporting_date');
             $table->string('leave_type');
+            $table->date('leave_date')->nullable();
+            $table->date('leave_from')->nullable();
+            $table->date('leave_to')->nullable();
+            $table->string('period')->nullable();
 
-            $table->date('leave_from');
-            $table->date('leave_to');
-            $table->enum('leave_duration', ['Full Day', 'Half Day', 'Hour Leave'])->default('Full Day');
-
-            $table->date('cancel_from')->nullable();
-            $table->date('cancel_to')->nullable();
             $table->text('reason')->nullable();
+            $table->enum('status', ['Pending', 'Approved', 'HR_Approved', 'Rejected'])->default('Pending');
 
             $table->softDeletes();
             $table->timestamps();
 
             $table->index('employee_id');
-            $table->index('attendance_no');
-            $table->index('epf_no');
 
         });
     }
