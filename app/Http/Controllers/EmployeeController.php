@@ -473,6 +473,7 @@ class EmployeeController extends Controller
             'spouse',
             'children',
             'contactDetail',
+            'compensation',
             'organizationAssignment.company',
             'organizationAssignment.department',
             'organizationAssignment.subDepartment',
