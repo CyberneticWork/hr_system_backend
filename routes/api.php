@@ -64,6 +64,7 @@ Route::get('/Leave-Master/status/pending', [LeaveMasterController::class, 'getPe
 Route::get('/Leave-Master/status/approved', [LeaveMasterController::class, 'getApprovedLeaveRecords']);
 Route::get('/Leave-Master/status/hr-approved', [LeaveMasterController::class, 'getHRApprovedLeaveRecords']);
 
+
 Route::get('/time-cards', [TimeCardController::class, 'index']);
 
 
@@ -98,4 +99,7 @@ Route::put('no-pay-records/{id}', [NoPayController::class, 'update']);
 Route::delete('no-pay-records/{id}', [NoPayController::class, 'destroy']);
 Route::post('no-pay-records/generate', [NoPayController::class, 'generateDailyNoPayRecords']);
 Route::get('no-pay-records/stats', [NoPayController::class, 'getNoPayStats']);
+
+//get employees by month and company
+Route::post('/salary-process/employees-by-month', [SalaryProcessController::class, 'getEmployeesByMonthAndCompany']);
 
