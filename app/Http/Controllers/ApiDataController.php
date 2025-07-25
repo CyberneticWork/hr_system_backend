@@ -122,25 +122,24 @@ class ApiDataController extends Controller
         $presentEmployees = time_card::distinct()->pluck('employee_id')->toArray();
         $absentEmployeeIds = array_diff($employeeIdsWithRosters, $presentEmployees);
 
-        $now = Carbon::now();
-        $absences = [];
+        $today = Carbon::today()->toDateString();
 
         foreach ($absentEmployeeIds as $employeeId) {
-            $absences[] = [
-                'employee_id' => $employeeId,
-                'date' => $now->toDateString(), // Today's date
-                'reason' => null, // Optional: Add later
-                'created_at' => $now,
-                'updated_at' => $now,
-            ];
+            absence::updateOrCreate(
+                [
+                    'employee_id' => $employeeId,
+                    'date' => $today, // Unique composite key
+                ],
+                [
+                    'reason' => null, // Update reason if needed
+                    'updated_at' => Carbon::now(),
+                ]
+            );
         }
-
-        // Bulk insert for efficiency
-        absence::insert($absences);
 
         return response()->json([
             'absent_employees' => $absentEmployeeIds,
-            'message' => 'Absent employees stored successfully!'
+            'message' => 'Absent employees stored without duplicates!'
         ], 200);
     }
 }
