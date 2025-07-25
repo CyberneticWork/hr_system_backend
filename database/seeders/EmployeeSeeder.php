@@ -108,7 +108,7 @@ class EmployeeSeeder extends Seeder
         $lastNames = ['Bandara', 'Sandaruwan', 'Dananjaya', 'Gunawardane', 'Rupasinghe', 'Wickramasinghe', 'Jayawardena', 'Dissanayake', 'Jaaliya', 'Ranaweera'];
 
         // Generate 30 employees
-        for ($i = 1; $i <= 500; $i++) {
+        for ($i = 1; $i <= 100; $i++) {
             $gender = $genders[array_rand($genders)];
             $title = $gender === 'male' ? $titles[0] : (rand(0, 1) ? $titles[1] : $titles[2]);
 
