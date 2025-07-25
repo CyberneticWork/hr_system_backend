@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\absence;
+use Carbon\Carbon;
 use App\Models\company;
+use App\Models\employee;
+use App\Models\time_card;
 use App\Models\departments;
 use App\Models\designation;
 use Illuminate\Http\Request;
 use App\Models\sub_departments;
 use App\Models\organization_assignment;
-use App\Models\employee;
 
 class ApiDataController extends Controller
 {
@@ -111,5 +114,33 @@ class ApiDataController extends Controller
         })->get(['id', 'full_name']);
 
         return response()->json($employees, 200);
+    }
+
+    public function Absentees()
+    {
+        $employeeIdsWithRosters = employee::whereHas('rosters')->pluck('id')->toArray();
+        $presentEmployees = time_card::distinct()->pluck('employee_id')->toArray();
+        $absentEmployeeIds = array_diff($employeeIdsWithRosters, $presentEmployees);
+
+        $now = Carbon::now();
+        $absences = [];
+
+        foreach ($absentEmployeeIds as $employeeId) {
+            $absences[] = [
+                'employee_id' => $employeeId,
+                'date' => $now->toDateString(), // Today's date
+                'reason' => null, // Optional: Add later
+                'created_at' => $now,
+                'updated_at' => $now,
+            ];
+        }
+
+        // Bulk insert for efficiency
+        absence::insert($absences);
+
+        return response()->json([
+            'absent_employees' => $absentEmployeeIds,
+            'message' => 'Absent employees stored successfully!'
+        ], 200);
     }
 }

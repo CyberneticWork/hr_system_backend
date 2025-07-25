@@ -102,3 +102,4 @@ Route::post('/attendance', [TimeCardController::class, 'attendance']);
     Route::get('no-pay-records/stats', [NoPayController::class, 'getNoPayStats']);
 
 Route::post('/attendance/mark-absentees', [TimeCardController::class, 'markAbsentees']);
+Route::get('/absentees', [ApiDataController::class, 'Absentees']);
