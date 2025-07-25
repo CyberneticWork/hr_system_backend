@@ -20,6 +20,7 @@ use App\Http\Controllers\LeaveCalenderController;
 use App\Http\Controllers\SubDepartmentsController;
 use App\Http\Controllers\LeaveMasterController;
 use App\Http\Controllers\NoPayController;
+use App\Http\Controllers\SalaryProcessController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -54,6 +55,7 @@ Route::apiResource('subdepartments', SubDepartmentsController::class);
 Route::apiResource('rosters', RosterController::class);
 Route::apiResource('overtime', OvertimeController::class);
 Route::apiResource('leave-masters', LeaveMasterController::class);
+Route::apiResource('salary-process', SalaryProcessController::class);
 Route::get('/Leave-Master/{employeeId}/counts', [LeaveMasterController::class, 'getLeaveRecordCountsByEmployee']);
 
 Route::get('/Leave-Master/status/pending', [LeaveMasterController::class, 'getPendingLeaveRecords']);

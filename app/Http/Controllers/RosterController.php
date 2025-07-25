@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use App\Models\roster;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 class RosterController extends Controller
 {
@@ -29,8 +30,14 @@ class RosterController extends Controller
 
     public function store(Request $request)
     {
-        // Logic to create a new roster
+        // Check if the request contains JSON array data
+        if ($this->isJsonArray($request)) {
+            return $this->storeBulk($request);
+        }
+
+        // Original single entry logic
         $validator = Validator::make($request->all(), [
+            'roster_id' => 'required|integer',
             'shift_code' => 'required|exists:shifts,id',
             'company_id' => 'nullable|exists:companies,id',
             'department_id' => 'nullable|exists:departments,id',
@@ -42,12 +49,101 @@ class RosterController extends Controller
             'date_from' => 'nullable|date',
             'date_to' => 'nullable|date',
         ]);
+
         if ($validator->fails()) {
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $roster = roster::create($validator->validated());
+        $data = $validator->validated();
+
+        // If roster_id not provided, generate one
+        if (!isset($data['roster_id'])) {
+            $data['roster_id'] = roster::max('roster_id') + 1;
+        }
+
+        $roster = roster::create($data);
         return response()->json($roster, 201);
+    }
+
+    protected function isJsonArray($request)
+    {
+        $content = $request->getContent();
+        if (empty($content)) {
+            return false;
+        }
+
+        $data = json_decode($content, true);
+        return is_array($data) && array_keys($data) === range(0, count($data) - 1);
+    }
+
+    public function storeBulk(Request $request)
+    {
+        $entries = json_decode($request->getContent(), true);
+
+        if (!is_array($entries)) {
+            return response()->json(['error' => 'Invalid bulk data format. Expected JSON array.'], 400);
+        }
+
+        // Validate all entries
+        $validatedEntries = [];
+        $errors = [];
+        $rosterId = null;
+
+        foreach ($entries as $index => $entry) {
+            $validator = Validator::make($entry, [
+                'roster_id' => 'required|integer',
+                'shift_code' => 'required|exists:shifts,id',
+                'company_id' => 'nullable|exists:companies,id',
+                'department_id' => 'nullable|exists:departments,id',
+                'sub_department_id' => 'nullable|exists:sub_departments,id',
+                'employee_id' => 'nullable|exists:employees,id',
+                'is_recurring' => 'boolean',
+                'recurrence_pattern' => 'nullable|string',
+                'notes' => 'nullable|string',
+                'date_from' => 'nullable|date',
+                'date_to' => 'nullable|date',
+            ]);
+
+            if ($validator->fails()) {
+                $errors[$index] = $validator->errors();
+                continue;
+            }
+
+            $validated = $validator->validated();
+
+            // Ensure all entries have the same roster_id
+            if ($rosterId === null) {
+                $rosterId = $validated['roster_id'];
+            } elseif ($validated['roster_id'] !== $rosterId) {
+                $errors[$index] = ['roster_id' => 'All entries in a bulk request must have the same roster_id'];
+                continue;
+            }
+
+            $validatedEntries[] = $validated;
+        }
+
+        if (!empty($errors)) {
+            return response()->json(['errors' => $errors], 422);
+        }
+
+        // Insert all valid entries in a transaction
+        DB::beginTransaction();
+        try {
+            roster::insert($validatedEntries);
+            DB::commit();
+
+            return response()->json([
+                'message' => 'Bulk roster entries created successfully',
+                'roster_id' => $rosterId,
+                'count' => count($validatedEntries)
+            ], 201);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'error' => 'Failed to create bulk roster entries',
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
     public function update(Request $request, $id)
