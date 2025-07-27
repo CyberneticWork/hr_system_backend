@@ -12,6 +12,7 @@ class deduction extends Model
     use SoftDeletes;
     protected $fillable = [
         'department_id',
+        'company_id',     // Add this line
         'deduction_code',
         'deduction_name',
         'description',
@@ -33,16 +34,14 @@ class deduction extends Model
     }
 
 
-    public function company(): HasOneThrough
+    // Update the company relationship to direct relationship
+    public function company(): BelongsTo
     {
-        // Get the company through the department relationship
-        return $this->hasOneThrough(
-            company::class,
-            departments::class,
-            'id', // Foreign key on departments table
-            'id', // Foreign key on companies table
-            'department_id', // Local key on deductions table
-            'company_id' // Local key on departments table
-        );
+        return $this->belongsTo(company::class);
+    }
+
+    public function employeeDeductions()
+    {
+        return $this->hasMany(employee_deductions::class);
     }
 }

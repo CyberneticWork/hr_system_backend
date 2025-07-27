@@ -71,6 +71,68 @@ class SalaryProcessController extends Controller
     {
         //
     }
+    // public function getEmployeesByMonthAndCompany(Request $request)
+    // {
+    //     $validator = Validator::make($request->all(), [
+    //         'month' => 'required|integer|between:1,12',
+    //         'year' => 'required|integer',
+    //         'company_id' => 'required|exists:companies,id',
+    //         'department_id' => 'nullable|exists:departments,id'
+    //     ]);
+
+    //     if ($validator->fails()) {
+    //         return response()->json([
+    //             'message' => 'Validation failed',
+    //             'errors' => $validator->errors()
+    //         ], 422);
+    //     }
+
+    //     $month = $request->month;
+    //     $year = $request->year;
+    //     $startDate = "$year-$month-01";
+    //     $endDate = date('Y-m-t', strtotime($startDate));
+
+    //     // Simplified roster date condition
+    //     $rosterCondition = function ($query) use ($startDate, $endDate) {
+    //         $query->where(function ($q) use ($startDate, $endDate) {
+    //             $q->whereNull('date_from')
+    //                 ->whereNull('date_to');
+    //         })->orWhere(function ($q) use ($startDate, $endDate) {
+    //             $q->where('date_from', '<=', $endDate)
+    //                 ->where('date_to', '>=', $startDate);
+    //         });
+    //     };
+
+    //     $query = Employee::with([
+    //         'organizationAssignment.company',
+    //         'organizationAssignment.department',
+    //         'organizationAssignment.subDepartment',
+    //         'organizationAssignment.designation',
+    //         'compensation',
+    //         'rosters' => function ($query) use ($rosterCondition) {
+    //             $query->where($rosterCondition)
+    //                 ->with('shift');
+    //         }
+    //     ])
+    //         ->whereHas('organizationAssignment', function ($query) use ($request) {
+    //             $query->where('company_id', $request->company_id);
+    //             if ($request->has('department_id')) {
+    //                 $query->where('department_id', $request->department_id);
+    //             }
+    //         })
+    //         ->whereHas('rosters', $rosterCondition);
+
+    //     $employees = $query->get();
+
+    //     return response()->json([
+    //         'data' => $employees,
+    //         'month' => $month,
+    //         'year' => $year,
+    //         'company_id' => $request->company_id,
+    //         'department_id' => $request->department_id ?? null,
+    //     ]);
+    // }
+
     public function getEmployeesByMonthAndCompany(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -90,57 +152,59 @@ class SalaryProcessController extends Controller
         $month = $request->month;
         $year = $request->year;
         $startDate = "$year-$month-01";
-        $endDate = date('Y-m-t', strtotime($startDate)); // Last day of month
+        $endDate = date('Y-m-t', strtotime($startDate));
 
-        // Query to get employees from the specified company
-        $query = employee::with([
-            'organizationAssignment.company',
-            'organizationAssignment.department',
-            'organizationAssignment.subDepartment',
-            'organizationAssignment.designation',
-            'compensation',
-            'rosters' => function ($query) use ($startDate, $endDate) {
-                $query->whereBetween('date_from', [$startDate, $endDate])
-                    ->orWhereBetween('date_to', [$startDate, $endDate])
-                    ->orWhere(function ($q) use ($startDate, $endDate) {
-                        $q->where('date_from', '<=', $startDate)
-                            ->where('date_to', '>=', $endDate);
-                    })
-                    ->orWhere(function ($q) {
-                        $q->whereNull('date_from')
-                            ->whereNull('date_to');
-                    })
-                    ->with('shift');
-            }
+        // Simplified roster date condition
+        $rosterCondition = function ($query) use ($startDate, $endDate) {
+            $query->where(function ($q) use ($startDate, $endDate) {
+                $q->whereNull('date_from')
+                    ->whereNull('date_to');
+            })->orWhere(function ($q) use ($startDate, $endDate) {
+                $q->where('date_from', '<=', $endDate)
+                    ->where('date_to', '>=', $startDate);
+            });
+        };
+
+        $employees = Employee::select([
+            'employees.id',
+            'employees.attendance_employee_no as emp_no',
+            'employees.full_name',
+            'employees.organization_assignment_id'
         ])
+            ->with([
+                'organizationAssignment.company:id,name',
+                'organizationAssignment.department:id,name',
+                'rosters' => function ($query) use ($rosterCondition) {
+                    $query->where($rosterCondition);
+                }
+            ])
             ->whereHas('organizationAssignment', function ($query) use ($request) {
                 $query->where('company_id', $request->company_id);
-
                 if ($request->has('department_id')) {
                     $query->where('department_id', $request->department_id);
                 }
             })
-            ->whereHas('rosters', function ($query) use ($startDate, $endDate) {
-                $query->whereBetween('date_from', [$startDate, $endDate])
-                    ->orWhereBetween('date_to', [$startDate, $endDate])
-                    ->orWhere(function ($q) use ($startDate, $endDate) {
-                        $q->where('date_from', '<=', $startDate)
-                            ->where('date_to', '>=', $endDate);
-                    })
-                    ->orWhere(function ($q) {
-                        $q->whereNull('date_from')
-                            ->whereNull('date_to');
-                    });
+            ->whereHas('rosters', $rosterCondition)
+            ->get()
+            ->map(function ($employee) {
+                return [
+                    'emp_no' => $employee->emp_no,
+                    'name' => $employee->full_name,
+                    'company' => $employee->organizationAssignment->company->name ?? null,
+                    'department' => $employee->organizationAssignment->department->name ?? null,
+                    'has_roster' => $employee->rosters->isNotEmpty()
+                ];
             });
-
-        $employees = $query->get();
 
         return response()->json([
             'data' => $employees,
-            'month' => $month,
-            'year' => $year,
-            'company_id' => $request->company_id,
-            'department_id' => $request->department_id ?? null,
+            'meta' => [
+                'month' => $month,
+                'year' => $year,
+                'company_id' => $request->company_id,
+                'department_id' => $request->department_id ?? null,
+                'count' => $employees->count()
+            ]
         ]);
     }
 

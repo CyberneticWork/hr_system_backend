@@ -105,7 +105,7 @@ Route::post('no-pay-records/generate', [NoPayController::class, 'generateDailyNo
 Route::get('no-pay-records/stats', [NoPayController::class, 'getNoPayStats']);
 
 //get employees by month and company
-Route::post('/salary-process/employees-by-month', [SalaryProcessController::class, 'getEmployeesByMonthAndCompany']);
+Route::get('/salary-process/employees-by-month', [SalaryProcessController::class, 'getEmployeesByMonthAndCompany']);
 
 Route::post('/attendance/mark-absentees', [TimeCardController::class, 'markAbsentees']);
 Route::get('/absentees', [ApiDataController::class, 'Absentees']);

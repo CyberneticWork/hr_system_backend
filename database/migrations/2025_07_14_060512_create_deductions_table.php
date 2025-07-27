@@ -13,6 +13,7 @@ return new class extends Migration {
         Schema::create('deductions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('department_id')->constrained('departments');
+            $table->foreignId('company_id')->constrained('companies');  // Add this line
             $table->string('deduction_code')->unique();
             $table->string('deduction_name');
             $table->text('description')->nullable();
@@ -28,6 +29,7 @@ return new class extends Migration {
             $table->index('deduction_code');
             $table->index('deduction_name');
             $table->index('department_id');
+            $table->index('company_id');  // Add this index
         });
     }
 
