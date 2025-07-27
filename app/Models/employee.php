@@ -79,4 +79,16 @@ class employee extends Model
         return $this->hasMany(employee_deductions::class);
     }
 
+    public function allowances()
+    {
+        return $this->belongsToMany(Allowances::class, 'employee_allowances')
+            ->withPivot('custom_amount');
+    }
+
+    public function deductions()
+    {
+        return $this->belongsToMany(Deduction::class, 'employee_deductions')
+            ->withPivot('custom_amount');
+    }
+
 }
