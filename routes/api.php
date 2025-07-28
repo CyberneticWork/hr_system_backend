@@ -98,6 +98,8 @@ Route::post('/time-cards', [TimeCardController::class, 'store']);
 Route::post('/attendance', [TimeCardController::class, 'attendance']);
 // Route::post('/attendance/mark-absentees', [TimeCardController::class, 'markAbsentees']);
 Route::get('/time-cards/search-employee', [TimeCardController::class, 'searchByEmployee']);
+Route::post('/attendance/import-excel', [TimeCardController::class, 'importExcel']);
+Route::get('/companies', [CompanyController::class, 'index']);
 
 //get employees by month and company
 Route::get('/salary-process/employees-by-month', [SalaryProcessController::class, 'getEmployeesByMonthAndCompany']);
@@ -113,3 +115,4 @@ Route::delete('no-pay-records/{id}', [NoPayController::class, 'destroy']);
 Route::delete('no-pay-records/bulk-delete', [NoPayController::class, 'bulkDestroy']);
 Route::post('no-pay-records/generate', [NoPayController::class, 'generateDailyNoPayRecords']);
 Route::get('no-pay-records/stats', [NoPayController::class, 'getNoPayStats']);
+

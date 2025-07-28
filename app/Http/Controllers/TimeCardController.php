@@ -11,6 +11,10 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Models\TimeCard;
+use Maatwebsite\Excel\Facades\Excel;
+use Illuminate\Support\Facades\DB;
+use App\Models\absences;
+// use Maatwebsite\Excel\Facades\Excel;
 
 class TimeCardController extends Controller
 {
@@ -460,7 +464,7 @@ class TimeCardController extends Controller
     //                 'date' => $card->date,
     //                 'entry' => $card->entry,
     //                 'status' => $card->status,
-    //             ];
+    //             };
     //         });
 
     //     return response()->json([
@@ -495,4 +499,181 @@ class TimeCardController extends Controller
 
 //         return response()->json(['message' => 'Time card deleted successfully']);
 //     }
+
+    public function importExcel(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:xlsx,xls',
+            'company_id' => 'required|exists:companies,id',
+            'date' => 'required|date',
+        ]);
+
+        $companyId = $request->input('company_id');
+        $importDate = $request->input('date');
+
+        $path = $request->file('file')->getRealPath();
+        $rows = Excel::toArray([], $path)[0];
+
+        $results = [
+            'imported' => 0,
+            'absent' => 0,
+            'errors' => [],
+        ];
+
+        \DB::beginTransaction();
+        try {
+            foreach ($rows as $index => $row) {
+                if ($index === 0) continue; // skip header row
+
+                $nic = trim($row[0]);
+                $date = $importDate ?: trim($row[1]);
+                $rawTime = trim($row[2]);
+                $entry = trim($row[3]);
+                $status = trim($row[4]);
+
+                // Parse time from Excel
+                try {
+                    if (is_numeric($rawTime)) {
+                        $seconds = round($rawTime * 24 * 60 * 60);
+                        $hours = floor($seconds / 3600);
+                        $minutes = floor(($seconds % 3600) / 60);
+                        $seconds = $seconds % 60;
+                        $time = sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
+                    } else {
+                        $carbonTime = \Carbon\Carbon::parse($rawTime);
+                        $time = $carbonTime->format('H:i:s');
+                    }
+                } catch (\Exception $ex) {
+                    $results['errors'][] = "Invalid time format";
+                    continue;
+                }
+
+                // Find employee by NIC and company
+                $employee = \App\Models\employee::where('nic', $nic)
+                    ->whereHas('organizationAssignment', function ($q) use ($companyId) {
+                        $q->where('company_id', $companyId);
+                    })
+                    ->first();
+
+                if (!$employee) {
+                    $results['errors'][] = "Employee not found for NIC in selected company";
+                    continue;
+                }
+
+                // Check roster/shift assignment for this employee and date
+                $org = $employee->organizationAssignment;
+                $roster = \App\Models\roster::where('employee_id', $employee->id)
+                    ->whereNull('deleted_at')
+                    ->where(function ($q) use ($date) {
+                        $q->whereNull('date_from')->orWhere('date_from', '<=', $date);
+                    })
+                    ->where(function ($q) use ($date) {
+                        $q->whereNull('date_to')->orWhere('date_to', '>=', $date);
+                    })
+                    ->first();
+                if (!$roster && $org) {
+                    if ($org->sub_department_id) {
+                        $roster = \App\Models\roster::where('sub_department_id', $org->sub_department_id)
+                            ->whereNull('employee_id')
+                            ->whereNull('deleted_at')
+                            ->where(function ($q) use ($date) {
+                                $q->whereNull('date_from')->orWhere('date_from', '<=', $date);
+                            })
+                            ->where(function ($q) use ($date) {
+                                $q->whereNull('date_to')->orWhere('date_to', '>=', $date);
+                            })
+                            ->first();
+                    }
+                    if (!$roster && $org->department_id) {
+                        $roster = \App\Models\roster::where('department_id', $org->department_id)
+                            ->whereNull('employee_id')
+                            ->whereNull('sub_department_id')
+                            ->whereNull('deleted_at')
+                            ->where(function ($q) use ($date) {
+                                $q->whereNull('date_from')->orWhere('date_from', '<=', $date);
+                            })
+                            ->where(function ($q) use ($date) {
+                                $q->whereNull('date_to')->orWhere('date_to', '>=', $date);
+                            })
+                            ->first();
+                    }
+                    if (!$roster && $org->company_id) {
+                        $roster = roster::where('company_id', $org->company_id)
+                            ->whereNull('employee_id')
+                            ->whereNull('sub_department_id')
+                            ->whereNull('department_id')
+                            ->whereNull('deleted_at')
+                            ->where(function ($q) use ($date) {
+                                $q->whereNull('date_from')->orWhere('date_from', '<=', $date);
+                            })
+                            ->where(function ($q) use ($date) {
+                                $q->whereNull('date_to')->orWhere('date_to', '>=', $date);
+                            })
+                            ->first();
+                    }
+                }
+                if (!$roster) {
+                    $results['errors'][] = "No shift/roster assigned for this employee on $date";
+                    continue;
+                }
+
+                // Get shift for roster
+                $shift = shifts::find($roster->shift_code);
+                if (!$shift) {
+                    $results['errors'][] = "Shift not found for roster";
+                    continue;
+                }
+
+                // Attendance logic
+                if (in_array(strtoupper($status), ['IN', 'OUT', 'LEAVE'])) {
+                    $working_hours = null;
+                    if (strtoupper($status) === 'OUT') {
+                        // Find IN record for working hours calculation
+                        $inCard = time_card::where('employee_id', $employee->id)
+                            ->where('date', $date)
+                            ->where('status', 'IN')
+                            ->orderBy('time', 'asc')
+                            ->first();
+                        if ($inCard) {
+                            $inTime = Carbon::parse($inCard->time);
+                            $outTime = Carbon::parse($time);
+                            $working_hours = round($inTime->floatDiffInHours($outTime), 2);
+                        }
+                    }
+
+                    time_card::create([
+                        'employee_id' => $employee->id,
+                        'time' => $time,
+                        'date' => $date,
+                        'working_hours' => $working_hours,
+                        'entry' => $entry,
+                        'status' => strtoupper($status),
+                    ]);
+                    $results['imported']++;
+                } elseif (strtoupper($status) === 'ABSENT') {
+                    absences::create([
+                        'employee_id' => $employee->id,
+                        'date' => $date,
+                        'reason' => 'Imported from Excel',
+                    ]);
+                    $results['absent']++;
+                } else {
+                    $results['errors'][] = "Unknown status";
+                }
+            }
+            \DB::commit();
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            return response()->json([
+                'message' => 'Import error',
+                'errors' => array_unique($results['errors']),
+                'exception' => $e->getMessage()
+            ], 500);
+        }
+
+        // Remove duplicate error messages before returning
+        $results['errors'] = array_unique($results['errors']);
+
+        return response()->json($results);
+    }
 }
