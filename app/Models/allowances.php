@@ -41,4 +41,8 @@ class allowances extends Model
     {
         return $this->belongsTo(departments::class);
     }
+    public function employeeAllowances()
+    {
+        return $this->hasMany(employee_allowances::class);
+    }
 }

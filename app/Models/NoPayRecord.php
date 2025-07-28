@@ -18,14 +18,32 @@ class NoPayRecord extends Model
         'processed_by'
     ];
 
+    protected $casts = [
+        'date' => 'date',
+    ];
+
     public function employee()
     {
-        return $this->belongsTo(Employee::class);
+        return $this->belongsTo(Employee::class)->with('organizationAssignment');
     }
 
     public function processedBy()
     {
         return $this->belongsTo(User::class, 'processed_by');
     }
-}
 
+    public function scopePending($query)
+    {
+        return $query->where('status', 'Pending');
+    }
+
+    public function scopeApproved($query)
+    {
+        return $query->where('status', 'Approved');
+    }
+
+    public function scopeRejected($query)
+    {
+        return $query->where('status', 'Rejected');
+    }
+}

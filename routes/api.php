@@ -47,6 +47,8 @@ Route::get('/emp/table', [EmployeeController::class, 'getEmployeesForTable']);
 Route::get('/emp/search', [EmployeeController::class, 'search']);
 Route::apiResource('loans', LoanController::class);
 Route::apiResource('allowances', AllowancesController::class);
+Route::get('/allowance/by-company-or-department', [AllowancesController::class, 'getAllowancesByCompanyOrDepartment']);
+
 Route::apiResource('deductions', DeductionController::class);
 Route::apiResource('leave-calendars', LeaveCalenderController::class);
 Route::apiResource('companies', CompanyController::class);
@@ -61,6 +63,7 @@ Route::get('/Leave-Master/{employeeId}/counts', [LeaveMasterController::class, '
 Route::get('/Leave-Master/status/pending', [LeaveMasterController::class, 'getPendingLeaveRecords']);
 Route::get('/Leave-Master/status/approved', [LeaveMasterController::class, 'getApprovedLeaveRecords']);
 Route::get('/Leave-Master/status/hr-approved', [LeaveMasterController::class, 'getHRApprovedLeaveRecords']);
+
 
 Route::get('/time-cards', [TimeCardController::class, 'index']);
 
@@ -93,12 +96,20 @@ Route::delete('/time-cards/{id}', [TimeCardController::class, 'destroy']);
 Route::get('/employees/by-nic/{nic}', [EmployeeController::class, 'getByNic']);
 Route::post('/time-cards', [TimeCardController::class, 'store']);
 Route::post('/attendance', [TimeCardController::class, 'attendance']);
+// Route::post('/attendance/mark-absentees', [TimeCardController::class, 'markAbsentees']);
+Route::get('/time-cards/search-employee', [TimeCardController::class, 'searchByEmployee']);
 
-    Route::get('no-pay-records', [NoPayController::class, 'index']);
-    Route::post('no-pay-records', [NoPayController::class, 'store']);
-    Route::put('no-pay-records/{id}', [NoPayController::class, 'update']);
-    Route::delete('no-pay-records/{id}', [NoPayController::class, 'destroy']);
-    Route::post('no-pay-records/generate', [NoPayController::class, 'generateDailyNoPayRecords']);
-    Route::get('no-pay-records/stats', [NoPayController::class, 'getNoPayStats']);
+//get employees by month and company
+Route::get('/salary-process/employees-by-month', [SalaryProcessController::class, 'getEmployeesByMonthAndCompany']);
 
 Route::post('/attendance/mark-absentees', [TimeCardController::class, 'markAbsentees']);
+Route::get('/absentees', [ApiDataController::class, 'Absentees']);
+// No Pay routes
+Route::get('no-pay-records', [NoPayController::class, 'index']);
+Route::post('no-pay-records', [NoPayController::class, 'store']);
+Route::put('no-pay-records/{id}', [NoPayController::class, 'update']);
+Route::post('no-pay-records/bulk-update', [NoPayController::class, 'bulkUpdateStatus']);
+Route::delete('no-pay-records/{id}', [NoPayController::class, 'destroy']);
+Route::delete('no-pay-records/bulk-delete', [NoPayController::class, 'bulkDestroy']);
+Route::post('no-pay-records/generate', [NoPayController::class, 'generateDailyNoPayRecords']);
+Route::get('no-pay-records/stats', [NoPayController::class, 'getNoPayStats']);

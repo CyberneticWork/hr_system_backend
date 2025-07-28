@@ -32,4 +32,8 @@ class compensation extends Model
         'br1',
         'br2'
     ];
+    public function employee()
+    {
+        return $this->belongsTo(employee::class);
+    }
 }
