@@ -101,6 +101,7 @@ Route::get('/time-cards/search-employee', [TimeCardController::class, 'searchByE
 
 //get employees by month and company
 Route::get('/salary/process/employees-by-month', [SalaryProcessController::class, 'getEmployeesByMonthAndCompany']);
+Route::post('/salary/process/allowances', [SalaryProcessController::class, 'updateEmployeesAllowances']);
 
 Route::post('/attendance/mark-absentees', [TimeCardController::class, 'markAbsentees']);
 Route::get('/absentees', [ApiDataController::class, 'Absentees']);

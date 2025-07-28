@@ -170,25 +170,37 @@ class SalaryProcessController extends Controller
             'compensation.ot_evening',
             'compensation.enable_epf_etf',
             DB::raw("CASE
-            WHEN compensation.br1 = 1 AND compensation.br2 = 1 THEN 'Both BR1 and BR2'
-            WHEN compensation.br1 = 1 THEN 'BR1 Only'
-            WHEN compensation.br2 = 1 THEN 'BR2 Only'
-            ELSE 'None'
-        END AS br_status"),
+                WHEN compensation.br1 = 1 AND compensation.br2 = 1 THEN 'Both BR1 and BR2'
+                WHEN compensation.br1 = 1 THEN 'BR1 Only'
+                WHEN compensation.br2 = 1 THEN 'BR2 Only'
+                ELSE 'None'
+            END AS br_status"),
             DB::raw("COALESCE(SUM(loans.loan_amount), 0) as total_loan_amount"),
             DB::raw("COALESCE(COUNT(npr.id), 0) as approved_no_pay_days"),
-            'allowances.id as allowance_id',
-            'allowances.allowance_name',
-            DB::raw("COALESCE(ea.custom_amount, allowances.amount) as allowance_amount"),
-            DB::raw("CASE WHEN ea.id IS NOT NULL THEN 1 ELSE 0 END AS is_custom_allowance"),
-            'allowances.allowance_code',
-            'allowances.category as allowance_category',
-            'deductions.id as deduction_id',
-            'deductions.deduction_name',
-            DB::raw("COALESCE(ed.custom_amount, deductions.amount) as deduction_amount"),
-            DB::raw("CASE WHEN ed.id IS NOT NULL THEN 1 ELSE 0 END AS is_custom_deduction"),
-            'deductions.deduction_code',
-            'deductions.category as deduction_category'
+            DB::raw("CONCAT('[',
+                GROUP_CONCAT(DISTINCT
+                    JSON_OBJECT(
+                        'id', allowances.id,
+                        'allowance_name', allowances.allowance_name,
+                        'amount', COALESCE(ea.custom_amount, allowances.amount),
+                        'is_custom', CASE WHEN ea.id IS NOT NULL THEN 1 ELSE 0 END,
+                        'allowance_code', allowances.allowance_code,
+                        'category', allowances.category
+                    )
+                ),
+            ']') AS allowances"),
+            DB::raw("CONCAT('[',
+                GROUP_CONCAT(DISTINCT
+                    JSON_OBJECT(
+                        'id', deductions.id,
+                        'deduction_name', deductions.deduction_name,
+                        'amount', COALESCE(ed.custom_amount, deductions.amount),
+                        'is_custom', CASE WHEN ed.id IS NOT NULL THEN 1 ELSE 0 END,
+                        'deduction_code', deductions.deduction_code,
+                        'category', deductions.category
+                    )
+                ),
+            ']') AS deductions")
         ])
             ->join('organization_assignments as oa', 'employees.organization_assignment_id', '=', 'oa.id')
             ->join('companies', 'oa.company_id', '=', 'companies.id')
@@ -246,7 +258,7 @@ class SalaryProcessController extends Controller
                             ->orWhereBetween('rosters.date_to', [$startDate, $endDate]);
                     });
             })
-            ->groupBy(
+            ->groupBy([
                 'employees.id',
                 'employees.attendance_employee_no',
                 'employees.full_name',
@@ -261,23 +273,16 @@ class SalaryProcessController extends Controller
                 'compensation.ot_evening',
                 'compensation.enable_epf_etf',
                 'compensation.br1',
-                'compensation.br2',
-                'allowances.id',
-                'allowances.allowance_name',
-                'allowances.amount',
-                'ea.custom_amount',
-                'ea.id',
-                'allowances.allowance_code',
-                'allowances.category',
-                'deductions.id',
-                'deductions.deduction_name',
-                'deductions.amount',
-                'ed.custom_amount',
-                'ed.id',
-                'deductions.deduction_code',
-                'deductions.category'
-            )
+                'compensation.br2'
+            ])
             ->get();
+
+        // Process the JSON strings into actual arrays
+        $employees->transform(function ($employee) {
+            $employee->allowances = json_decode($employee->allowances ?? '[]', true);
+            $employee->deductions = json_decode($employee->deductions ?? '[]', true);
+            return $employee;
+        });
 
         return response()->json([
             'data' => $employees,
@@ -289,6 +294,11 @@ class SalaryProcessController extends Controller
                 'count' => $employees->count()
             ]
         ]);
+    }
+
+    public function updateEmployeesAllowances(Request $request)
+    {
+        return response()->json($request->all(), 200);
     }
 
 
