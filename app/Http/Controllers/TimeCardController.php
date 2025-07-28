@@ -28,7 +28,7 @@ class TimeCardController extends Controller
                     'date' => $card->date,
                     'entry' => $card->entry,
                     'inOut' => $card->entry == 1 ? 'IN' : ($card->entry == 2 ? 'OUT' : null),
-                    // 'department' => $card->employee->organizationAssignment->department->name ?? null,
+                    'department' => $card->employee->organizationAssignment->department->name ?? null,
                     'status' => $card->status,
                 ];
             });
@@ -45,6 +45,77 @@ class TimeCardController extends Controller
             'entry' => 'required',
             'status' => 'required',
         ]);
+
+        // --- Roster/shift assignment check (same as attendance) ---
+        $employee = employee::find($validated['employee_id']);
+        if (!$employee) {
+            return response()->json(['message' => 'Employee not found'], 404);
+        }
+        $org = $employee->organizationAssignment;
+        if (!$org) {
+            return response()->json(['message' => 'Organization assignment not found'], 404);
+        }
+
+        // Find roster for this employee for the given date (fallback logic)
+        $roster = roster::where('employee_id', $employee->id)
+            ->whereNull('deleted_at')
+            ->where(function ($q) use ($validated) {
+                $q->whereNull('date_from')->orWhere('date_from', '<=', $validated['date']);
+            })
+            ->where(function ($q) use ($validated) {
+                $q->whereNull('date_to')->orWhere('date_to', '>=', $validated['date']);
+            })
+            ->first();
+        if (!$roster && $org->sub_department_id) {
+            $roster = roster::where('sub_department_id', $org->sub_department_id)
+                ->whereNull('employee_id')
+                ->whereNull('deleted_at')
+                ->where(function ($q) use ($validated) {
+                    $q->where(function ($q2) use ($validated) {
+                        $q2->whereNull('date_from')->orWhere('date_from', '<=', $validated['date']);
+                    });
+                    $q->where(function ($q2) use ($validated) {
+                        $q2->whereNull('date_to')->orWhere('date_to', '>=', $validated['date']);
+                    });
+                })
+                ->first();
+        }
+        if (!$roster && $org->department_id) {
+            $roster = roster::where('department_id', $org->department_id)
+                ->whereNull('employee_id')
+                ->whereNull('sub_department_id')
+                ->whereNull('deleted_at')
+                ->where(function ($q) use ($validated) {
+                    $q->where(function ($q2) use ($validated) {
+                        $q2->whereNull('date_from')->orWhere('date_from', '<=', $validated['date']);
+                    });
+                    $q->where(function ($q2) use ($validated) {
+                        $q2->whereNull('date_to')->orWhere('date_to', '>=', $validated['date']);
+                    });
+                })
+                ->first();
+        }
+        if (!$roster && $org->company_id) {
+            $roster = roster::where('company_id', $org->company_id)
+                ->whereNull('employee_id')
+                ->whereNull('sub_department_id')
+                ->whereNull('department_id')
+                ->whereNull('deleted_at')
+                ->where(function ($q) use ($validated) {
+                    $q->where(function ($q2) use ($validated) {
+                        $q2->whereNull('date_from')->orWhere('date_from', '<=', $validated['date']);
+                    });
+                    $q->where(function ($q2) use ($validated) {
+                        $q2->whereNull('date_to')->orWhere('date_to', '>=', $validated['date']);
+                    });
+                })
+                ->first();
+        }
+
+        if (!$roster) {
+            return response()->json(['message' => 'No shift/roster assigned for this employee on this date'], 422);
+        }
+        // --- End roster/shift assignment check ---
 
         $working_hours = null;
 
@@ -73,7 +144,6 @@ class TimeCardController extends Controller
         ]);
 
         if ($validated['status'] == "OUT") {
-            $employee = employee::find($validated['employee_id']);
             $shift_code = $employee->rosters[0]->shift_code ?? null;
             $shift = shifts::find($shift_code);
             $shift_duration = $shift ? Carbon::parse($shift->start_time)->diffInHours(Carbon::parse($shift->end_time)) : null;
@@ -260,105 +330,144 @@ class TimeCardController extends Controller
             'roster' => $roster,
         ], 201);
     }
-    public function markAbsentees(Request $request)
+    public function searchByEmployee(Request $request)
     {
-        $date = $request->input('date');
-        if (!$date) {
-            return response()->json(['message' => 'Date is required'], 422);
+        $search = $request->query('q');
+        if (!$search) {
+            return response()->json(['message' => 'Search query is required'], 422);
         }
 
-        // Get all rosters active on this date
-        $rosters = roster::whereNull('deleted_at')
-            ->where(function ($q) use ($date) {
-                $q->whereNull('date_from')->orWhere('date_from', '<=', $date);
-            })
-            ->where(function ($q) use ($date) {
-                $q->whereNull('date_to')->orWhere('date_to', '>=', $date);
-            })
-            ->get();
+        // Find employee by NIC or EPF number
+        $employee = employee::where('nic', $search)
+            ->orWhere('attendance_employee_no', $search)
+            ->first();
 
-        $absentRecords = [];
-
-        foreach ($rosters as $roster) {
-            // Find employees for this roster
-            if ($roster->employee_id) {
-                $employees = employee::where('id', $roster->employee_id)->where('is_active', 1)->get();
-            } else {
-                $query = employee::where('is_active', 1);
-                if ($roster->sub_department_id) {
-                    $query->whereHas('organizationAssignment', function ($q) use ($roster) {
-                        $q->where('sub_department_id', $roster->sub_department_id);
-                    });
-                } elseif ($roster->department_id) {
-                    $query->whereHas('organizationAssignment', function ($q) use ($roster) {
-                        $q->where('department_id', $roster->department_id);
-                    });
-                } elseif ($roster->company_id) {
-                    $query->whereHas('organizationAssignment', function ($q) use ($roster) {
-                        $q->where('company_id', $roster->company_id);
-                    });
-                }
-                $employees = $query->get();
-            }
-
-            foreach ($employees as $employee) {
-                // Check if both IN and OUT exist for this date
-                $hasIn = time_card::where('employee_id', $employee->id)
-                    ->where('date', $date)
-                    ->where('entry', 1)
-                    ->exists();
-                $hasOut = time_card::where('employee_id', $employee->id)
-                    ->where('date', $date)
-                    ->where('entry', 2)
-                    ->exists();
-
-                if (!($hasIn && $hasOut)) {
-                    // Mark as absent if not already marked
-                    $alreadyAbsent = time_card::where('employee_id', $employee->id)
-                        ->where('date', $date)
-                        ->where('status', 'Absent')
-                        ->exists();
-                    if (!$alreadyAbsent) {
-                        $absent = time_card::create([
-                            'employee_id' => $employee->id,
-                            'date' => $date,
-                            'entry' => 0,
-                            'status' => 'Absent',
-                        ]);
-                        $absentRecords[] = $absent;
-                    }
-                }
-            }
+        if (!$employee) {
+            return response()->json(['message' => 'Employee not found'], 404);
         }
 
-        // Fetch all absent records for the date, with related details
-        $absentees = time_card::with([
-                'employee.organizationAssignment.department',
-                'employee.organizationAssignment.subDepartment',
-                'employee.organizationAssignment.company'
-            ])
-            ->where('date', $date)
-            ->where('status', 'Absent')
+        // Fetch time cards for this employee, ordered by date and time (latest first)
+        $cards = time_card::with(['employee.organizationAssignment.department'])
+            ->where('employee_id', $employee->id)
+            ->orderBy('date', 'desc')
+            ->orderBy('time', 'desc')
             ->get()
             ->map(function ($card) {
                 return [
-                    'id' => $card->id, // <-- Add this line
+                    'id' => $card->id,
                     'empNo' => $card->employee->attendance_employee_no ?? null,
                     'name' => $card->employee->full_name ?? null,
-                    'department' => $card->employee->organizationAssignment->department->name ?? null,
-                    'sub_department' => $card->employee->organizationAssignment->subDepartment->name ?? null,
-                    'company' => $card->employee->organizationAssignment->company->name ?? null,
+                    'fingerprintClock' => null,
+                    'time' => $card->time,
                     'date' => $card->date,
                     'entry' => $card->entry,
+                    'inOut' => $card->entry == 1 ? 'IN' : ($card->entry == 2 ? 'OUT' : null),
+                    'department' => $card->employee->organizationAssignment->department->name ?? null,
                     'status' => $card->status,
                 ];
             });
 
-        return response()->json([
-            'message' => 'Absentees marked for date ' . $date,
-            'absentees' => $absentees,
-        ]);
+        return response()->json($cards);
     }
+    // public function markAbsentees(Request $request)
+    // {
+    //     $date = $request->input('date');
+    //     if (!$date) {
+    //         return response()->json(['message' => 'Date is required'], 422);
+    //     }
+
+    //     // Get all rosters active on this date
+    //     $rosters = roster::whereNull('deleted_at')
+    //         ->where(function ($q) use ($date) {
+    //             $q->whereNull('date_from')->orWhere('date_from', '<=', $date);
+    //         })
+    //         ->where(function ($q) use ($date) {
+    //             $q->whereNull('date_to')->orWhere('date_to', '>=', $date);
+    //         })
+    //         ->get();
+
+    //     $absentRecords = [];
+
+    //     foreach ($rosters as $roster) {
+    //         // Find employees for this roster
+    //         if ($roster->employee_id) {
+    //             $employees = employee::where('id', $roster->employee_id)->where('is_active', 1)->get();
+    //         } else {
+    //             $query = employee::where('is_active', 1);
+    //             if ($roster->sub_department_id) {
+    //                 $query->whereHas('organizationAssignment', function ($q) use ($roster) {
+    //                     $q->where('sub_department_id', $roster->sub_department_id);
+    //                 });
+    //             } elseif ($roster->department_id) {
+    //                 $query->whereHas('organizationAssignment', function ($q) use ($roster) {
+    //                     $q->where('department_id', $roster->department_id);
+    //                 });
+    //             } elseif ($roster->company_id) {
+    //                 $query->whereHas('organizationAssignment', function ($q) use ($roster) {
+    //                     $q->where('company_id', $roster->company_id);
+    //                 });
+    //             }
+    //             $employees = $query->get();
+    //         }
+
+    //         foreach ($employees as $employee) {
+    //             // Check if both IN and OUT exist for this date
+    //             $hasIn = time_card::where('employee_id', $employee->id)
+    //                 ->where('date', $date)
+    //                 ->where('entry', 1)
+    //                 ->exists();
+    //             $hasOut = time_card::where('employee_id', $employee->id)
+    //                 ->where('date', $date)
+    //                 ->where('entry', 2)
+    //                 ->exists();
+
+    //             if (!($hasIn && $hasOut)) {
+    //                 // Mark as absent if not already marked
+    //                 $alreadyAbsent = time_card::where('employee_id', $employee->id)
+    //                     ->where('date', $date)
+    //                     ->where('status', 'Absent')
+    //                     ->exists();
+    //                 if (!$alreadyAbsent) {
+    //                     $absent = time_card::create([
+    //                         'employee_id' => $employee->id,
+    //                         'date' => $date,
+    //                         'entry' => 0,
+    //                         'status' => 'Absent',
+    //                     ]);
+    //                     $absentRecords[] = $absent;
+    //                 }
+    //             }
+    //         }
+    //     }
+
+    //     // Fetch all absent records for the date, with related details
+    //     $absentees = time_card::with([
+    //             'employee.organizationAssignment.department',
+    //             'employee.organizationAssignment.subDepartment',
+    //             'employee.organizationAssignment.company'
+    //         ])
+    //         ->where('date', $date)
+    //         ->where('status', 'Absent')
+    //         ->get()
+    //         ->map(function ($card) {
+    //             return [
+    //                 'id' => $card->id, // <-- Add this line
+    //                 'empNo' => $card->employee->attendance_employee_no ?? null,
+    //                 'name' => $card->employee->full_name ?? null,
+    //                 'department' => $card->employee->organizationAssignment->department->name ?? null,
+    //                 'sub_department' => $card->employee->organizationAssignment->subDepartment->name ?? null,
+    //                 'company' => $card->employee->organizationAssignment->company->name ?? null,
+    //                 'date' => $card->date,
+    //                 'entry' => $card->entry,
+    //                 'status' => $card->status,
+    //             ];
+    //         });
+
+    //     return response()->json([
+    //         'message' => 'Absentees marked for date ' . $date,
+    //         'absentees' => $absentees,
+    //     ]);
+    // }
 
 //     public function update(Request $request, $id)
 //     {

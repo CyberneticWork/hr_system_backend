@@ -96,6 +96,8 @@ Route::delete('/time-cards/{id}', [TimeCardController::class, 'destroy']);
 Route::get('/employees/by-nic/{nic}', [EmployeeController::class, 'getByNic']);
 Route::post('/time-cards', [TimeCardController::class, 'store']);
 Route::post('/attendance', [TimeCardController::class, 'attendance']);
+// Route::post('/attendance/mark-absentees', [TimeCardController::class, 'markAbsentees']);
+Route::get('/time-cards/search-employee', [TimeCardController::class, 'searchByEmployee']);
 
 Route::get('no-pay-records', [NoPayController::class, 'index']);
 Route::post('no-pay-records', [NoPayController::class, 'store']);
