@@ -6,10 +6,13 @@ use App\Models\NoPayRecord;
 use App\Models\Employee;
 use App\Models\time_card;
 use App\Models\leave_master;
+use App\Models\roster;
+use App\Models\leaveCalendar;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class NoPayController extends Controller
 {
@@ -34,6 +37,20 @@ class NoPayController extends Controller
             $query->where('status', $request->status);
         }
 
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->whereHas('employee', function($q) use ($search) {
+                $q->where('full_name', 'like', "%$search%")
+                  ->orWhere('attendance_employee_no', 'like', "%$search%");
+            });
+        }
+
+        // Pagination
+        if ($request->has('page') && $request->has('per_page')) {
+            $perPage = $request->per_page;
+            return $query->paginate($perPage);
+        }
+
         return response()->json($query->get());
     }
 
@@ -44,6 +61,7 @@ class NoPayController extends Controller
             'date' => 'required|date',
             'no_pay_count' => 'required|numeric|min:0.5|max:2',
             'description' => 'required|string|max:500',
+            'status' => 'sometimes|in:Pending,Approved,Rejected',
         ]);
 
         if ($validator->fails()) {
@@ -55,7 +73,8 @@ class NoPayController extends Controller
             'date' => $request->date,
             'no_pay_count' => $request->no_pay_count,
             'description' => $request->description,
-            'processed_by' => auth::id(),
+            'status' => $request->status ?? 'Pending',
+            'processed_by' => Auth::id(),
         ]);
 
         return response()->json($noPayRecord, 201);
@@ -79,6 +98,30 @@ class NoPayController extends Controller
         return response()->json($noPayRecord);
     }
 
+    public function bulkUpdateStatus(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'ids' => 'required|array',
+            'ids.*' => 'exists:no_pay_records,id',
+            'status' => 'required|in:Pending,Approved,Rejected',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        $updatedCount = NoPayRecord::whereIn('id', $request->ids)
+            ->update([
+                'status' => $request->status,
+                'processed_by' => Auth::id(),
+            ]);
+
+        return response()->json([
+            'message' => 'Successfully updated ' . $updatedCount . ' records',
+            'updated_count' => $updatedCount
+        ]);
+    }
+
     public function destroy($id)
     {
         $noPayRecord = NoPayRecord::findOrFail($id);
@@ -87,16 +130,63 @@ class NoPayController extends Controller
         return response()->json(null, 204);
     }
 
+    public function bulkDestroy(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'ids' => 'required|array',
+            'ids.*' => 'exists:no_pay_records,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        $deletedCount = NoPayRecord::whereIn('id', $request->ids)->delete();
+
+        return response()->json([
+            'message' => 'Successfully deleted ' . $deletedCount . ' records',
+            'deleted_count' => $deletedCount
+        ]);
+    }
+
     public function generateDailyNoPayRecords(Request $request)
     {
-        $date = $request->date ?? Carbon::today()->toDateString();
+        $validator = Validator::make($request->all(), [
+            'date' => 'required|date',
+            'status' => 'sometimes|in:Pending,Approved,Rejected',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        $date = $request->date;
+        $status = $request->status ?? 'Pending';
+        $carbonDate = Carbon::parse($date);
         
         // Get all active employees
-        $employees = employee::where('is_active', '1')->get();
+        $employees = Employee::where('is_active', '1')->get();
         
         $generatedRecords = [];
         
         foreach ($employees as $employee) {
+            // Skip if employee has compensation.nopay_active set to false
+            if ($employee->compensation && $employee->compensation->active_nopay === false) {
+                continue;
+            }
+
+            // Check if it's employee's day off
+            $dayOff = $employee->organizationAssignment->day_off ?? null;
+            if ($dayOff && $carbonDate->dayName === $dayOff) {
+                continue;
+            }
+
+            // Check if employee has roster assignment for this day
+            $hasRoster = $this->checkEmployeeRoster($employee, $date);
+            if (!$hasRoster) {
+                continue;
+            }
+
             // Check if employee has time card for the date
             $hasTimeCard = time_card::where('employee_id', $employee->id)
                 ->whereDate('date', $date)
@@ -121,24 +211,30 @@ class NoPayController extends Controller
             if ($hasLeave) {
                 continue;
             }
+
+            // Check if company/department has holiday
+            $hasHoliday = $this->checkCompanyHoliday($employee, $date);
+            if ($hasHoliday) {
+                continue;
+            }
             
             // Create no pay record
-           try{
+            try {
                 $record = NoPayRecord::firstOrCreate([
                     'employee_id' => $employee->id,
                     'date' => $date,
                 ], [
                     'no_pay_count' => 1, // Default full day
-                    'description' => 'Automatic no-pay record - no attendance and no approved leave',
-                    'status' => 'Pending',
-                    'processed_by' => auth::id(),
+                    'description' => 'Automatic no-pay record - no attendance, no approved leave, and not a holiday/day off',
+                    'status' => $status,
+                    'processed_by' => Auth::id(),
                 ]);
+                
+                if ($record->wasRecentlyCreated) {
+                    $generatedRecords[] = $record;
+                }
             } catch (\Exception $e) {
                 return response()->json(['error' => 'Failed to create no-pay record: ' . $e->getMessage()], 500);
-           }
-            
-            if ($record->wasRecentlyCreated) {
-                $generatedRecords[] = $record;
             }
         }
         
@@ -146,6 +242,59 @@ class NoPayController extends Controller
             'message' => count($generatedRecords) . ' no-pay records generated',
             'records' => $generatedRecords
         ]);
+    }
+
+    protected function checkEmployeeRoster($employee, $date)
+    {
+        // Check if employee has roster assignment for this day
+        return roster::where('employee_id', $employee->id)
+            ->where(function($query) use ($date) {
+                $query->whereNull('date_from')
+                    ->orWhere('date_from', '<=', $date);
+            })
+            ->where(function($query) use ($date) {
+                $query->whereNull('date_to')
+                    ->orWhere('date_to', '>=', $date);
+            })
+            ->exists();
+    }
+
+    protected function checkCompanyHoliday($employee, $date)
+    {
+        $orgAssignment = $employee->organizationAssignment;
+        if (!$orgAssignment) {
+            return false;
+        }
+
+        // Check company holidays
+        $companyHoliday = leaveCalendar::where('company_id', $orgAssignment->company_id)
+            ->whereDate('start_date', '<=', $date)
+            ->where(function($query) use ($date) {
+                $query->whereNull('end_date')
+                    ->orWhereDate('end_date', '>=', $date);
+            })
+            ->exists();
+
+        if ($companyHoliday) {
+            return true;
+        }
+
+        // Check department holidays
+        if ($orgAssignment->department_id) {
+            $deptHoliday = leaveCalendar::where('department_id', $orgAssignment->department_id)
+                ->whereDate('start_date', '<=', $date)
+                ->where(function($query) use ($date) {
+                    $query->whereNull('end_date')
+                        ->orWhereDate('end_date', '>=', $date);
+                })
+                ->exists();
+
+            if ($deptHoliday) {
+                return true;
+            }
+        }
+
+        return false;
     }
     
     public function getNoPayStats(Request $request)
@@ -158,6 +307,10 @@ class NoPayController extends Controller
         
         if ($request->has('year')) {
             $query->whereYear('date', $request->year);
+        }
+
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
         }
         
         $totalRecords = $query->count();
