@@ -32,11 +32,11 @@ class AllowancesTemplateExport implements FromArray, WithHeadings, WithTitle, Wi
     public function headings(): array
     {
         return [
-          'allowance_code',
+        'allowance_code',
         'allowance_name',
         'status (active/inactive)',
         'category (travel/bonus/performance/health/other)',
-        'allowance_type ',
+        'allowance_type',
         'company_id',
         'department_id',
         'amount',

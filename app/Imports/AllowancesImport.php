@@ -20,28 +20,27 @@ class AllowancesImport implements ToCollection, WithHeadingRow
                 continue;
             }
 
-            // Normalize and validate the row structure
             $normalizedRow = $this->normalizeRow($row);
-            
+
             if (!isset($normalizedRow['allowance_type'])) {
                 $this->errors[] = [
                     'row' => $index + 2,
                     'errors' => ['Missing required column: allowance_type']
                 ];
                 continue;
-                 if (isset($normalized['variable_from']) && is_numeric($normalized['variable_from'])) {
-        $normalized['variable_from'] = $this->convertExcelDate($normalized['variable_from']);
-    }
-    
-    if (isset($normalized['variable_to']) && is_numeric($normalized['variable_to'])) {
-        $normalized['variable_to'] = $this->convertExcelDate($normalized['variable_to']);
-    }
-    
-    if (isset($normalized['fixed_date']) && is_numeric($normalized['fixed_date'])) {
-        $normalized['fixed_date'] = $this->convertExcelDate($normalized['fixed_date']);
-    }
-    
-    return $normalized;
+            }
+
+            // Convert Excel dates to proper format
+            if (isset($normalizedRow['fixed_date']) && is_numeric($normalizedRow['fixed_date'])) {
+                $normalizedRow['fixed_date'] = $this->convertExcelDate($normalizedRow['fixed_date']);
+            }
+
+            if (isset($normalizedRow['variable_from']) && is_numeric($normalizedRow['variable_from'])) {
+                $normalizedRow['variable_from'] = $this->convertExcelDate($normalizedRow['variable_from']);
+            }
+
+            if (isset($normalizedRow['variable_to']) && is_numeric($normalizedRow['variable_to'])) {
+                $normalizedRow['variable_to'] = $this->convertExcelDate($normalizedRow['variable_to']);
             }
 
             $validator = Validator::make($normalizedRow, [
@@ -73,9 +72,11 @@ class AllowancesImport implements ToCollection, WithHeadingRow
                         return $normalizedRow['allowance_type'] === 'variable';
                     }),
                     function ($attribute, $value, $fail) use ($normalizedRow) {
-                        if ($normalizedRow['allowance_type'] === 'variable' && 
-                            isset($normalizedRow['variable_to']) && 
-                            $value > $normalizedRow['variable_to']) {
+                        if (
+                            $normalizedRow['allowance_type'] === 'variable' &&
+                            isset($normalizedRow['variable_to']) &&
+                            $value > $normalizedRow['variable_to']
+                        ) {
                             $fail('The from date must be before the to date.');
                         }
                     }
@@ -99,8 +100,6 @@ class AllowancesImport implements ToCollection, WithHeadingRow
             }
 
             $data = $validator->validated();
-
-            // Prepare data based on allowance type
             $data = $this->prepareData($data);
 
             Allowances::create($data);
@@ -152,15 +151,23 @@ class AllowancesImport implements ToCollection, WithHeadingRow
 
         return $data;
     }
-private function convertExcelDate($excelDate)
-{
-    if (is_numeric($excelDate)) {
-        // Convert Excel serial date to YYYY-MM-DD
-        $unixDate = ($excelDate - 25569) * 86400;
-        return gmdate("Y-m-d", $unixDate);
+
+    private function convertExcelDate($excelDate)
+    {
+        if (is_numeric($excelDate)) {
+            // Convert Excel serial date to YYYY-MM-DD
+            $unixDate = ($excelDate - 25569) * 86400;
+            return gmdate("Y-m-d", $unixDate);
+        }
+        
+        // Try to parse as date string if not numeric
+        try {
+            return date("Y-m-d", strtotime($excelDate));
+        } catch (\Exception $e) {
+            return $excelDate;
+        }
     }
-    return $excelDate;
-}
+
     private function throwValidationException()
     {
         $errorMessages = [];
