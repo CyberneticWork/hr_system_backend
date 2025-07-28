@@ -20,8 +20,7 @@ return new class extends Migration {
             $table->enum('category', ['travel', 'bonus', 'perfomance', 'health', 'other'])->default('other');
             $table->enum('allowance_type', ['fixed', 'variable'])->default('fixed');
 
-            $table->decimal('production_incentive', 10, 2)->default(0);
-            $table->decimal('medical_reimbursement', 10, 2)->default(0);
+        
 
             $table->foreignId('company_id')->constrained('companies');
             $table->foreignId('department_id')->constrained('departments');
