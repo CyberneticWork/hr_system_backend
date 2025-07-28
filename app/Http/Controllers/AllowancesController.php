@@ -213,5 +213,31 @@ class AllowancesController extends Controller
         return response()->json(['data' => $allowances], 200);
     }
 
+    /**
+     * Download Excel template for allowances import
+     */
+    public function downloadTemplate()
+    {
+        return Excel::download(new AllowancesTemplateExport(), 'allowances_template.xlsx');
+    }
 
+    /**
+     * Import allowances from Excel
+     */
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:xlsx,xls'
+        ]);
+
+        try {
+            Excel::import(new AllowancesImport(), $request->file('file'));
+            return response()->json(['message' => 'Allowances imported successfully'], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error importing file',
+                'error' => $e->getMessage()
+            ], 422);
+        }
+    }
 }
