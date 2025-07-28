@@ -19,6 +19,8 @@ return new class extends Migration {
             $table->decimal('installment_amount', 10, 2);
             $table->date('start_from');
             $table->boolean('with_interest')->default(false);
+            $table->integer('installment_count')->nullable();
+            $table->enum('status', ['active', 'completed'])->default('active');
 
             $table->softDeletes();
             $table->timestamps();
