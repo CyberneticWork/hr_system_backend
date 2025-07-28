@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\employee;
+use App\Models\employee_allowances;
+use App\Models\employee_deductions;
 use Illuminate\Http\Request;
 use App\Models\salary_process;
 use Illuminate\Support\Facades\DB;
@@ -298,7 +300,51 @@ class SalaryProcessController extends Controller
 
     public function updateEmployeesAllowances(Request $request)
     {
-        return response()->json($request->all(), 200);
+        $employeeIDs = $request->selectedEmployees; // This is an array of IDs
+        $type = $request->bulkActionType;
+        $amount = $request->bulkActionAmount || null; // Changed from 'amount' to match JSON
+
+        if (!is_array($employeeIDs) || empty($employeeIDs)) {
+            return response()->json(['error' => 'No employees selected'], 400);
+        }
+
+        $typeId = $request->bulkActionId;
+
+        if ($type == "allowance") {
+            $records = [];
+            foreach ($employeeIDs as $employeeId) {
+                $records[] = [
+                    'employee_id' => $employeeId,
+                    'allowance_id' => $typeId,
+                    'custom_amount' => $amount,
+                    'is_active' => 1,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+            employee_allowances::insert($records);
+        }
+        if ($type == "deduction") {
+            $records = [];
+            foreach ($employeeIDs as $employeeId) {
+                $records[] = [
+                    'employee_id' => $employeeId,
+                    'deduction_id' => $typeId,
+                    'custom_amount' => $amount,
+                    'is_active' => 1,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
+            employee_deductions::insert($records);
+        }
+
+        return response()->json([
+            'message' => 'Bulk update successful',
+            'affected_employees' => count($employeeIDs),
+            'type' => $type,
+            'amount' => $amount
+        ], 200);
     }
 
 
