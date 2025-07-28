@@ -53,7 +53,7 @@ class employee extends Model
         return $this->hasOne(contact_detail::class);
     }
 
-     public function compensation()
+    public function compensation()
     {
         return $this->hasOne(compensation::class);
     }
@@ -67,6 +67,28 @@ class employee extends Model
     public function leaveMasters()
     {
         return $this->hasMany(leave_master::class);
+    }
+    //relation to employee allowances
+    public function employeeAllowances()
+    {
+        return $this->hasMany(employee_allowances::class);
+    }
+    //relation to employee deductions
+    public function employeeDeductions()
+    {
+        return $this->hasMany(employee_deductions::class);
+    }
+
+    public function allowances()
+    {
+        return $this->belongsToMany(Allowances::class, 'employee_allowances')
+            ->withPivot('custom_amount');
+    }
+
+    public function deductions()
+    {
+        return $this->belongsToMany(Deduction::class, 'employee_deductions')
+            ->withPivot('custom_amount');
     }
 
 }

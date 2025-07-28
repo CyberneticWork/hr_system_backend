@@ -188,4 +188,26 @@ class AllowancesController extends Controller
 
         return response()->json(['data' => $departments], 200);
     }
+
+    //get allowances by company ID OR department ID
+    public function getAllowancesByCompanyOrDepartment(Request $request)
+    {
+        $query = Allowances::query();
+
+        if ($request->has('company_id')) {
+            $query->where('company_id', $request->company_id);
+        }
+
+        if ($request->has('department_id')) {
+            $query->where('department_id', $request->department_id);
+        }
+
+        $allowances = $query->get();
+
+        if ($allowances->isEmpty()) {
+            return response()->json(['message' => 'No allowances found.'], 404);
+        }
+
+        return response()->json(['data' => $allowances], 200);
+    }
 }
