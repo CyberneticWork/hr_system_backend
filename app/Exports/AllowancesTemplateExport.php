@@ -32,17 +32,17 @@ class AllowancesTemplateExport implements FromArray, WithHeadings, WithTitle, Wi
     public function headings(): array
     {
         return [
-            'allowance_code',
-            'allowance_name',
-            'status',
-            'category',
-            'allowance_type',
-            'company_id',
-            'department_id',
-            'amount',
-            'fixed_date',
-            'variable_from',
-            'variable_to'
+          'allowance_code',
+        'allowance_name',
+        'status (active/inactive)',
+        'category (travel/bonus/performance/health/other)',
+        'allowance_type ',
+        'company_id',
+        'department_id',
+        'amount',
+        'fixed_date (YYYY-MM-DD) - required for fixed type',
+        'variable_from (YYYY-MM-DD) - required for variable type',
+        'variable_to (YYYY-MM-DD) - required for variable type'
         ];
     }
 
