@@ -39,8 +39,13 @@ class DeductionImport implements ToCollection, WithHeadingRow
                 $normalizedRow['endDate'] = $this->convertExcelDate($normalizedRow['endDate']);
             }
 
+            // Check if deduction_code already exists
+            if (isset($normalizedRow['deduction_code']) && deduction::where('deduction_code', $normalizedRow['deduction_code'])->exists()) {
+                continue; // Skip this row and continue with the next one
+            }
+
             $validator = Validator::make($normalizedRow, [
-                'deduction_code' => 'required|unique:deductions,deduction_code',
+                'deduction_code' => 'required',  // Removed unique validation since we're handling it above
                 'deduction_name' => 'required|string|max:255',
                 'description' => 'nullable|string',
                 'amount' => 'required|numeric|min:0',
@@ -66,8 +71,8 @@ class DeductionImport implements ToCollection, WithHeadingRow
                         if (
                             $normalizedRow['deduction_type'] === 'variable' &&
                             isset($normalizedRow['startDate']) &&
-                            $value <= $normalizedRow['startDate'])
-                         {
+                            $value <= $normalizedRow['startDate']
+                        ) {
                             $fail('End date must be after start date.');
                         }
                     }
@@ -139,7 +144,7 @@ class DeductionImport implements ToCollection, WithHeadingRow
             $unixDate = ($excelDate - 25569) * 86400;
             return gmdate("Y-m-d", $unixDate);
         }
-        
+
         // Try to parse as date string if not numeric
         try {
             return date("Y-m-d", strtotime($excelDate));
