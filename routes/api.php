@@ -117,3 +117,4 @@ Route::get('no-pay-records/stats', [NoPayController::class, 'getNoPayStats']);
 // Allowances import/export routes
 Route::get('/allowances/template/download', [AllowancesController::class, 'downloadTemplate']);
 Route::post('/allowances/import', [AllowancesController::class, 'import']);
+Route::get('/rosters/search', [RosterController::class, 'search']);

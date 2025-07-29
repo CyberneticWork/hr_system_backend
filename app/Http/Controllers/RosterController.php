@@ -185,4 +185,51 @@ class RosterController extends Controller
         $roster->delete();
         return response()->json(['message' => 'Roster deleted successfully']);
     }
+
+    public function search(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'date_from' => 'required|date',
+            'date_to' => 'required|date|after_or_equal:date_from',
+            'company_id' => 'nullable|exists:companies,id',
+            'department_id' => 'nullable|exists:departments,id',
+            'sub_department_id' => 'nullable|exists:sub_departments,id',
+            'employee_id' => 'nullable|exists:employees,id',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
+        }
+
+        $query = roster::with(['company', 'department', 'subDepartment', 'employee', 'shift'])->get();
+        // ->where(function ($q) use ($request) {
+        //     // Records that are active during the requested date range
+        //     $q->where(function ($query) use ($request) {
+        //         $query->where('date_from', '<=', $request->date_to)
+        //             ->where('date_to', '>=', $request->date_from);
+        //     })->orWhere(function ($query) use ($request) {
+        //         // Or records with no date range (always active)
+        //         $query->whereNull('date_from')
+        //             ->whereNull('date_to');
+        //     });
+        // });
+
+        // Apply optional filters
+        if ($request->filled('company_id')) {
+            $query->where('company_id', $request->company_id);
+        }
+        if ($request->filled('department_id')) {
+            $query->where('department_id', $request->department_id);
+        }
+        if ($request->filled('sub_department_id')) {
+            $query->where('sub_department_id', $request->sub_department_id);
+        }
+        if ($request->filled('employee_id')) {
+            $query->where('employee_id', $request->employee_id);
+        }
+
+        $rosters = $query->get();
+
+        return response()->json($rosters);
+    }
 }
