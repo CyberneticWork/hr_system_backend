@@ -1,7 +1,7 @@
 <?php
 namespace App\Http\Controllers;
 
-use App\Models\Allowances;
+use App\Models\allowances;
 use App\Models\Departments;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
