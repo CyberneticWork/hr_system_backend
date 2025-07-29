@@ -16,7 +16,6 @@ class DeductionSeeder extends Seeder
     {
         $categories = ['EPF', 'ETF', 'other'];
         $types = ['fixed', 'variable'];
-        $statuses = ['active', 'inactive'];
 
         $deductions = [
             ['EPF Contribution', 'EPF'],
@@ -35,11 +34,11 @@ class DeductionSeeder extends Seeder
             DB::table('deductions')->insert([
                 'deduction_code' => 'DED-' . Str::upper(Str::random(6)),
                 'deduction_name' => $deduction[0],
-                'company_id' => rand(1, 5),
+                'company_id' => rand(1, 4),
                 'department_id' => rand(1, 10),
                 'description' => 'Monthly ' . $deduction[0] . ' for employees',
                 'amount' => rand(500, 5000) / 100, // Random amount between 5.00 and 50.00
-                'status' => $statuses[array_rand($statuses)],
+                'status' => 'active',
                 'category' => $deduction[1],
                 'deduction_type' => $type,
                 'startDate' => !$isFixed ? now()->subDays(rand(1, 30))->format('Y-m-d') : null,

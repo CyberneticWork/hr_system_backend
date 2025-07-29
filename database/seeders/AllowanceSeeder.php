@@ -16,7 +16,6 @@ class AllowanceSeeder extends Seeder
     {
         $categories = ['travel', 'bonus', 'perfomance', 'health', 'other'];
         $types = ['fixed', 'variable'];
-        $statuses = ['active', 'inactive'];
 
         $allowances = [
             ['Travel Allowance', 'travel'],
@@ -38,7 +37,7 @@ class AllowanceSeeder extends Seeder
                 'allowance_name' => $allowance[0],
                 'company_id' => rand(1, 4),
                 'department_id' => rand(1, 10),
-                'status' => $statuses[array_rand($statuses)],
+                'status' => 'active',
                 'category' => $allowance[1],
                 'allowance_type' => $type,
                 'amount' => rand(1000, 10000) / 100, // Random amount between 10.00 and 100.00
