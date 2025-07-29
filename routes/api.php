@@ -100,6 +100,7 @@ Route::post('/attendance', [TimeCardController::class, 'attendance']);
 Route::get('/time-cards/search-employee', [TimeCardController::class, 'searchByEmployee']);
 Route::post('/attendance/import-excel', [TimeCardController::class, 'importExcel']);
 Route::get('/companies', [CompanyController::class, 'index']);
+Route::get('/attendance/absentees', [TimeCardController::class, 'fetchAbsentees']);
 
 //get employees by month and company
 Route::get('/salary/process/employees-by-month', [SalaryProcessController::class, 'getEmployeesByMonthAndCompany']);

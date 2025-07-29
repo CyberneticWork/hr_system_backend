@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Validator;
 use App\Models\TimeCard;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\DB;
-use App\Models\absences;
+use App\Models\absence;
 // use Maatwebsite\Excel\Facades\Excel;
 
 class TimeCardController extends Controller
@@ -530,6 +530,7 @@ class TimeCardController extends Controller
                 $rawTime = trim($row[2]);
                 $entry = trim($row[3]);
                 $status = trim($row[4]);
+                $reason = isset($row[5]) ? trim($row[5]) : null;
 
                 // Parse time from Excel
                 try {
@@ -540,7 +541,7 @@ class TimeCardController extends Controller
                         $seconds = $seconds % 60;
                         $time = sprintf('%02d:%02d:%02d', $hours, $minutes, $seconds);
                     } else {
-                        $carbonTime = \Carbon\Carbon::parse($rawTime);
+                        $carbonTime = Carbon::parse($rawTime);
                         $time = $carbonTime->format('H:i:s');
                     }
                 } catch (\Exception $ex) {
@@ -549,7 +550,7 @@ class TimeCardController extends Controller
                 }
 
                 // Find employee by NIC and company
-                $employee = \App\Models\employee::where('nic', $nic)
+                $employee = employee::where('nic', $nic)
                     ->whereHas('organizationAssignment', function ($q) use ($companyId) {
                         $q->where('company_id', $companyId);
                     })
@@ -562,7 +563,7 @@ class TimeCardController extends Controller
 
                 // Check roster/shift assignment for this employee and date
                 $org = $employee->organizationAssignment;
-                $roster = \App\Models\roster::where('employee_id', $employee->id)
+                $roster = roster::where('employee_id', $employee->id)
                     ->whereNull('deleted_at')
                     ->where(function ($q) use ($date) {
                         $q->whereNull('date_from')->orWhere('date_from', '<=', $date);
@@ -573,7 +574,7 @@ class TimeCardController extends Controller
                     ->first();
                 if (!$roster && $org) {
                     if ($org->sub_department_id) {
-                        $roster = \App\Models\roster::where('sub_department_id', $org->sub_department_id)
+                        $roster = roster::where('sub_department_id', $org->sub_department_id)
                             ->whereNull('employee_id')
                             ->whereNull('deleted_at')
                             ->where(function ($q) use ($date) {
@@ -585,7 +586,7 @@ class TimeCardController extends Controller
                             ->first();
                     }
                     if (!$roster && $org->department_id) {
-                        $roster = \App\Models\roster::where('department_id', $org->department_id)
+                        $roster = roster::where('department_id', $org->department_id)
                             ->whereNull('employee_id')
                             ->whereNull('sub_department_id')
                             ->whereNull('deleted_at')
@@ -641,22 +642,39 @@ class TimeCardController extends Controller
                         }
                     }
 
-                    time_card::create([
-                        'employee_id' => $employee->id,
-                        'time' => $time,
-                        'date' => $date,
-                        'working_hours' => $working_hours,
-                        'entry' => $entry,
-                        'status' => strtoupper($status),
-                    ]);
-                    $results['imported']++;
+                    // Prevent duplicate time_card
+                    $exists = time_card::where('employee_id', $employee->id)
+                        ->where('date', $date)
+                        ->where('time', $time)
+                        ->where('entry', $entry)
+                        ->where('status', strtoupper($status))
+                        ->exists();
+
+                    if (!$exists) {
+                        time_card::create([
+                            'employee_id' => $employee->id,
+                            'time' => $time,
+                            'date' => $date,
+                            'working_hours' => $working_hours,
+                            'entry' => $entry,
+                            'status' => strtoupper($status),
+                        ]);
+                        $results['imported']++;
+                    }
                 } elseif (strtoupper($status) === 'ABSENT') {
-                    absences::create([
-                        'employee_id' => $employee->id,
-                        'date' => $date,
-                        'reason' => 'Imported from Excel',
-                    ]);
-                    $results['absent']++;
+                    // Prevent duplicate absence
+                    $exists = absence::where('employee_id', $employee->id)
+                        ->where('date', $date)
+                        ->exists();
+
+                    if (!$exists) {
+                        absence::create([
+                            'employee_id' => $employee->id,
+                            'date' => $date,
+                            'reason' => $reason ?: 'not mentioned',
+                        ]);
+                        $results['absent']++;
+                    }
                 } else {
                     $results['errors'][] = "Unknown status";
                 }
@@ -675,5 +693,32 @@ class TimeCardController extends Controller
         $results['errors'] = array_unique($results['errors']);
 
         return response()->json($results);
+    }
+    public function fetchAbsentees(Request $request)
+    {
+        $date = $request->query('date');
+        $search = $request->query('search', '');
+
+        $query = absence::with(['employee'])
+            ->when($date, function ($q) use ($date) {
+                $q->where('date', $date);
+            })
+            ->when($search, function ($q) use ($search) {
+                $q->whereHas('employee', function ($q2) use ($search) {
+                    $q2->where('nic', 'like', "%$search%")
+                       ->orWhere('attendance_employee_no', 'like', "%$search%");
+                });
+            });
+
+        $absentees = $query->get()->map(function ($abs) {
+            return [
+                'id' => $abs->id,
+                'employee_name' => $abs->employee->full_name ?? null,
+                'date' => $abs->date,
+                'reason' => $abs->reason,
+            ];
+        });
+
+        return response()->json($absentees);
     }
 }
