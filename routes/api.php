@@ -100,6 +100,7 @@ Route::post('/attendance', [TimeCardController::class, 'attendance']);
 Route::get('/time-cards/search-employee', [TimeCardController::class, 'searchByEmployee']);
 Route::post('/attendance/import-excel', [TimeCardController::class, 'importExcel']);
 Route::get('/companies', [CompanyController::class, 'index']);
+Route::get('/attendance/absentees', [TimeCardController::class, 'fetchAbsentees']);
 
 //get employees by month and company
 Route::get('/salary/process/employees-by-month', [SalaryProcessController::class, 'getEmployeesByMonthAndCompany']);
@@ -120,7 +121,7 @@ Route::get('no-pay-records/stats', [NoPayController::class, 'getNoPayStats']);
 // Allowances import/export routes
 Route::get('/allowances/template/download', [AllowancesController::class, 'downloadTemplate']);
 Route::post('/allowances/import', [AllowancesController::class, 'import']);
-Route::get('/rosters/search', [RosterController::class, 'search']);
+Route::get('/roster/search', [RosterController::class, 'search']);
 
 // Deductions import/export routes
 Route::get('/deductions/template/download', [DeductionController::class, 'downloadTemplate']);

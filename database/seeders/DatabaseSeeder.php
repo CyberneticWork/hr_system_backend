@@ -147,6 +147,8 @@ class DatabaseSeeder extends Seeder
 
         $this->call([
             EmployeeSeeder::class,
+            AllowanceSeeder::class,
+            DeductionSeeder::class,
         ]);
 
         $employees = employee::all();
@@ -233,6 +235,8 @@ class DatabaseSeeder extends Seeder
                 'primary_emp_basic' => rand(0, 1) ? true : false,
             ]);
         }
+
+
 
     }
 }

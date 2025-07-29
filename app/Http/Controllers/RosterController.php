@@ -189,8 +189,8 @@ class RosterController extends Controller
     public function search(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'date_from' => 'required|date',
-            'date_to' => 'required|date|after_or_equal:date_from',
+            'date_from' => 'nullable|date',
+            'date_to' => 'nullable|date|after_or_equal:date_from',
             'company_id' => 'nullable|exists:companies,id',
             'department_id' => 'nullable|exists:departments,id',
             'sub_department_id' => 'nullable|exists:sub_departments,id',
@@ -201,35 +201,94 @@ class RosterController extends Controller
             return response()->json(['errors' => $validator->errors()], 422);
         }
 
-        $query = roster::with(['company', 'department', 'subDepartment', 'employee', 'shift'])->get();
-        // ->where(function ($q) use ($request) {
-        //     // Records that are active during the requested date range
-        //     $q->where(function ($query) use ($request) {
-        //         $query->where('date_from', '<=', $request->date_to)
-        //             ->where('date_to', '>=', $request->date_from);
-        //     })->orWhere(function ($query) use ($request) {
-        //         // Or records with no date range (always active)
-        //         $query->whereNull('date_from')
-        //             ->whereNull('date_to');
-        //     });
-        // });
+        $query = roster::with(['company', 'department', 'subDepartment', 'employee']);
 
-        // Apply optional filters
+        // Apply date filters if provided
+        if ($request->filled('date_from') || $request->filled('date_to')) {
+            $query->where(function ($q) use ($request) {
+                $dateFrom = $request->date_from;
+                $dateTo = $request->date_to ?? $request->date_from;
+
+                if ($dateFrom && $dateTo) {
+                    $q->whereBetween('date_from', [$dateFrom, $dateTo])
+                        ->orWhereBetween('date_to', [$dateFrom, $dateTo])
+                        ->orWhere(function ($query) use ($dateFrom, $dateTo) {
+                            $query->where('date_from', '<=', $dateFrom)
+                                ->where('date_to', '>=', $dateTo);
+                        });
+                } else if ($dateFrom) {
+                    $q->where('date_from', '>=', $dateFrom);
+                }
+            });
+        }
+
+        // Apply organization filters if provided
         if ($request->filled('company_id')) {
             $query->where('company_id', $request->company_id);
         }
+
         if ($request->filled('department_id')) {
             $query->where('department_id', $request->department_id);
         }
+
         if ($request->filled('sub_department_id')) {
             $query->where('sub_department_id', $request->sub_department_id);
         }
+
+        // Apply employee filter if provided
         if ($request->filled('employee_id')) {
             $query->where('employee_id', $request->employee_id);
         }
 
-        $rosters = $query->get();
+        try {
+            $rosters = $query->get()->map(function ($roster) {
+                return [
+                    'roster_details' => [
+                        'id' => $roster->id,
+                        'roster_id' => $roster->roster_id,
+                        'shift_code' => $roster->shift_code,
+                        'is_recurring' => $roster->is_recurring,
+                        'recurrence_pattern' => $roster->recurrence_pattern,
+                        'notes' => $roster->notes,
+                        'date_from' => $roster->date_from,
+                        'date_to' => $roster->date_to
+                    ],
+                    'organization_details' => [
+                        'company' => $roster->company ? [
+                            'id' => $roster->company->id,
+                            'name' => $roster->company->name
+                        ] : null,
+                        'department' => $roster->department ? [
+                            'id' => $roster->department->id,
+                            'name' => $roster->department->name
+                        ] : null,
+                        'sub_department' => $roster->subDepartment ? [
+                            'id' => $roster->subDepartment->id,
+                            'name' => $roster->subDepartment->name
+                        ] : null
+                    ],
+                    'employee_details' => $roster->employee ? [
+                        'id' => $roster->employee->id,
+                        'name' => $roster->employee->name_with_initials,
+                        'full_name' => $roster->employee->full_name,
+                        'epf' => $roster->employee->epf,
+                        'attendance_no' => $roster->employee->attendance_employee_no
+                    ] : null
+                ];
+            });
 
-        return response()->json($rosters);
+            return response()->json([
+                'status' => 'success',
+                'count' => $rosters->count(),
+                'data' => $rosters
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error retrieving roster data',
+                'error' => $e->getMessage()
+            ], 500);
+        }
     }
 }

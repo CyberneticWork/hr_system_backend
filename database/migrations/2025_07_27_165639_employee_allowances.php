@@ -17,9 +17,10 @@ return new class extends Migration {
             $table->decimal('custom_amount', 10, 2)->nullable();
             $table->boolean('is_active')->default(true);
 
-            $table->timestamps();
-            $table->softDeletes();
+            $table->unique(['employee_id', 'allowance_id']);
 
+            $table->softDeletes();
+            $table->timestamps();
         });
 
     }
