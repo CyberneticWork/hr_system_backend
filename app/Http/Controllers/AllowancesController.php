@@ -1,11 +1,14 @@
 <?php
 namespace App\Http\Controllers;
 
-use App\Models\allowances;
-use App\Models\departments;
+use App\Models\Allowances;
+use App\Models\Departments;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Validator;
+use App\Imports\AllowancesImport;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\AllowancesTemplateExport;
 
 class AllowancesController extends Controller
 {
@@ -180,7 +183,7 @@ class AllowancesController extends Controller
 
     public function getDepartmentsByCompany($companyId)
     {
-        $departments = departments::where('company_id', $companyId)->get(['id', 'name']);
+        $departments = Departments::where('company_id', $companyId)->get(['id', 'name']);
 
         if ($departments->isEmpty()) {
             return response()->json(['message' => 'No departments found for this company.'], 404);
@@ -189,7 +192,6 @@ class AllowancesController extends Controller
         return response()->json(['data' => $departments], 200);
     }
 
-    //get allowances by company ID OR department ID
     public function getAllowancesByCompanyOrDepartment(Request $request)
     {
         $query = Allowances::query();
@@ -209,5 +211,33 @@ class AllowancesController extends Controller
         }
 
         return response()->json(['data' => $allowances], 200);
+    }
+
+    /**
+     * Download Excel template for allowances import
+     */
+    public function downloadTemplate()
+    {
+        return Excel::download(new AllowancesTemplateExport(), 'allowances_template.xlsx');
+    }
+
+    /**
+     * Import allowances from Excel
+     */
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:xlsx,xls'
+        ]);
+
+        try {
+            Excel::import(new AllowancesImport(), $request->file('file'));
+            return response()->json(['message' => 'Allowances imported successfully'], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error importing file',
+                'error' => $e->getMessage()
+            ], 422);
+        }
     }
 }

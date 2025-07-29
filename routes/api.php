@@ -98,9 +98,12 @@ Route::post('/time-cards', [TimeCardController::class, 'store']);
 Route::post('/attendance', [TimeCardController::class, 'attendance']);
 // Route::post('/attendance/mark-absentees', [TimeCardController::class, 'markAbsentees']);
 Route::get('/time-cards/search-employee', [TimeCardController::class, 'searchByEmployee']);
+Route::post('/attendance/import-excel', [TimeCardController::class, 'importExcel']);
+Route::get('/companies', [CompanyController::class, 'index']);
 
 //get employees by month and company
-Route::get('/salary-process/employees-by-month', [SalaryProcessController::class, 'getEmployeesByMonthAndCompany']);
+Route::get('/salary/process/employees-by-month', [SalaryProcessController::class, 'getEmployeesByMonthAndCompany']);
+Route::post('/salary/process/allowances', [SalaryProcessController::class, 'updateEmployeesAllowances']);
 
 Route::post('/attendance/mark-absentees', [TimeCardController::class, 'markAbsentees']);
 Route::get('/absentees', [ApiDataController::class, 'Absentees']);
@@ -113,3 +116,12 @@ Route::delete('no-pay-records/{id}', [NoPayController::class, 'destroy']);
 Route::delete('no-pay-records/bulk-delete', [NoPayController::class, 'bulkDestroy']);
 Route::post('no-pay-records/generate', [NoPayController::class, 'generateDailyNoPayRecords']);
 Route::get('no-pay-records/stats', [NoPayController::class, 'getNoPayStats']);
+
+// Allowances import/export routes
+Route::get('/allowances/template/download', [AllowancesController::class, 'downloadTemplate']);
+Route::post('/allowances/import', [AllowancesController::class, 'import']);
+Route::get('/rosters/search', [RosterController::class, 'search']);
+
+// Deductions import/export routes
+Route::get('/deductions/template/download', [DeductionController::class, 'downloadTemplate']);
+Route::post('/deductions/import', [DeductionController::class, 'import']);

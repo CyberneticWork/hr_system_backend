@@ -9,7 +9,8 @@ class CompanyController extends Controller
 {
     public function index()
     {
-        return response()->json(company::all());
+        $companies = Company::select('id', 'name')->get();
+        return response()->json($companies);
     }
 
     public function store(Request $request)

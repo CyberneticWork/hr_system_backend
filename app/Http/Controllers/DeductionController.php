@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\deduction; // Assuming you have a Deduction model
 use Illuminate\Support\Facades\Validator;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\DeductionTemplateExport;
+use App\Imports\DeductionImport;
 
 class DeductionController extends Controller
 {
@@ -91,4 +94,32 @@ class DeductionController extends Controller
         $deduction->delete();
         return response()->json(['message' => 'Deduction deleted successfully']);
     }
+    /**
+ * Download Excel template for deductions import
+ */
+public function downloadTemplate()
+{
+    return Excel::download(new DeductionTemplateExport(), 'deductions_template.xlsx');
 }
+
+/**
+ * Import deductions from Excel
+ */
+public function import(Request $request)
+{
+    $request->validate([
+        'file' => 'required|mimes:xlsx,xls'
+    ]);
+
+    try {
+        Excel::import(new DeductionImport(), $request->file('file'));
+        return response()->json(['message' => 'Deductions imported successfully'], 200);
+    } catch (\Exception $e) {
+        return response()->json([
+            'message' => 'Error importing file',
+            'error' => $e->getMessage()
+        ], 422);
+    }
+}
+}
+

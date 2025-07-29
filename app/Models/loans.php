@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+
 class loans extends Model
 {
     use SoftDeletes;
@@ -17,5 +18,13 @@ class loans extends Model
         'installment_amount',
         'start_from',
         'with_interest',
+        'installment_count',
     ];
+
+    //relationships
+
+    public function employee()
+    {
+        return $this->belongsTo(Employee::class);
+    }
 }
