@@ -15,22 +15,19 @@ return new class extends Migration {
             $table->string('allowance_code')->unique();
             $table->string('allowance_name');
 
+            $table->foreignId('company_id')->constrained('companies');
+            $table->foreignId('department_id')->constrained('departments');
 
             $table->enum('status', ['active', 'inactive'])->default('active');
             $table->enum('category', ['travel', 'bonus', 'perfomance', 'health', 'other'])->default('other');
             $table->enum('allowance_type', ['fixed', 'variable'])->default('fixed');
 
-        
-
-            $table->foreignId('company_id')->constrained('companies');
-            $table->foreignId('department_id')->constrained('departments');
             $table->decimal('amount', 50, 2)->default(0.00);
             $table->date('fixed_date')->nullable();
             $table->date('variable_from')->nullable();
             $table->date('variable_to')->nullable();
             $table->softDeletes();
             $table->timestamps();
-
 
             $table->index('allowance_code');
             $table->index('allowance_name');
