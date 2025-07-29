@@ -91,4 +91,9 @@ class employee extends Model
             ->withPivot('custom_amount');
     }
 
+    public function loans()
+    {
+        return $this->hasMany(loans::class);
+    }
+
 }

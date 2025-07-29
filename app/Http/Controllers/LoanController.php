@@ -28,6 +28,7 @@ class LoanController extends Controller
             'installment_amount' => 'required|numeric|min:0',
             'start_from' => 'required|date',
             'with_interest' => 'required|boolean',
+            'installment_count' => 'nullable|integer|min:1',
         ]);
 
         $loan = loans::create($validated);
