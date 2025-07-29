@@ -48,6 +48,7 @@ Route::get('/emp/search', [EmployeeController::class, 'search']);
 Route::apiResource('loans', LoanController::class);
 Route::apiResource('allowances', AllowancesController::class);
 Route::get('/allowance/by-company-or-department', [AllowancesController::class, 'getAllowancesByCompanyOrDepartment']);
+Route::get('/deduction/by-company-or-department', [DeductionController::class, 'getDeductionsByCompanyOrDepartment']);
 
 Route::apiResource('deductions', DeductionController::class);
 Route::apiResource('leave-calendars', LeaveCalenderController::class);

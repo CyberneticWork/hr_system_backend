@@ -95,31 +95,46 @@ class DeductionController extends Controller
         return response()->json(['message' => 'Deduction deleted successfully']);
     }
     /**
- * Download Excel template for deductions import
- */
-public function downloadTemplate()
-{
-    return Excel::download(new DeductionTemplateExport(), 'deductions_template.xlsx');
-}
-
-/**
- * Import deductions from Excel
- */
-public function import(Request $request)
-{
-    $request->validate([
-        'file' => 'required|mimes:xlsx,xls'
-    ]);
-
-    try {
-        Excel::import(new DeductionImport(), $request->file('file'));
-        return response()->json(['message' => 'Deductions imported successfully'], 200);
-    } catch (\Exception $e) {
-        return response()->json([
-            'message' => 'Error importing file',
-            'error' => $e->getMessage()
-        ], 422);
+     * Download Excel template for deductions import
+     */
+    public function downloadTemplate()
+    {
+        return Excel::download(new DeductionTemplateExport(), 'deductions_template.xlsx');
     }
-}
+
+    /**
+     * Import deductions from Excel
+     */
+    public function import(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:xlsx,xls'
+        ]);
+
+        try {
+            Excel::import(new DeductionImport(), $request->file('file'));
+            return response()->json(['message' => 'Deductions imported successfully'], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error importing file',
+                'error' => $e->getMessage()
+            ], 422);
+        }
+    }
+
+    public function getDeductionsByCompanyOrDepartment(Request $request)
+    {
+        $query = deduction::where('status', 'active');
+
+
+
+        $allowances = $query->get();
+
+        if ($allowances->isEmpty()) {
+            return response()->json(['message' => 'No allowances found.'], 404);
+        }
+
+        return response()->json(['data' => $allowances], 200);
+    }
 }
 
