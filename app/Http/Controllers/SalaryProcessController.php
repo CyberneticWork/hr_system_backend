@@ -184,6 +184,10 @@ class SalaryProcessController extends Controller
                 -- Loans
                 COALESCE(SUM(lo.loan_amount), 0) AS total_loan_amount,
 
+                -- New loan fields
+                lo.installment_count,
+                lo.installment_amount,
+
                 -- No pay records
                 COALESCE(COUNT(npr.id), 0) AS approved_no_pay_days,
 
@@ -241,7 +245,7 @@ class SalaryProcessController extends Controller
             LEFT JOIN
                 compensation comp ON e.id = comp.employee_id
             LEFT JOIN
-                loans lo ON e.id = lo.employee_id
+                loans lo ON e.id = lo.employee_id AND lo.status = 'active'
             LEFT JOIN
                 no_pay_records npr ON e.id = npr.employee_id
                 AND npr.status = 'Approved'
@@ -273,6 +277,7 @@ class SalaryProcessController extends Controller
                 comp.increment_active, comp.increment_value,
                 comp.increment_effected_date, comp.ot_morning,
                 comp.ot_evening, comp.enable_epf_etf,
+                lo.installment_count, lo.installment_amount,
                 c.id, oa.department_id
         ";
 
@@ -324,6 +329,10 @@ class SalaryProcessController extends Controller
             // Replace the JSON strings with parsed arrays
             $employeeData['allowances'] = $allowances;
             $employeeData['deductions'] = $deductions;
+
+            // Ensure loan fields are properly handled (may be null if no active loans)
+            $employeeData['installment_count'] = $result->installment_count ?? 0;
+            $employeeData['installment_amount'] = $result->installment_amount ?? 0;
 
             $data[] = $employeeData;
         }
