@@ -1,8 +1,8 @@
 <?php
 namespace App\Http\Controllers;
 
-use App\Models\Allowances;
-use App\Models\Departments;
+use App\Models\allowances;
+use App\Models\departments;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Validator;
@@ -14,7 +14,7 @@ class AllowancesController extends Controller
 {
     public function index()
     {
-        $allowances = Allowances::with(['company:id,name', 'department:id,name'])->get();
+        $allowances = allowances::with(['company:id,name', 'department:id,name'])->get();
         return response()->json(['data' => $allowances], 200);
     }
 
@@ -81,13 +81,13 @@ class AllowancesController extends Controller
             $data['fixed_date'] = null;
         }
 
-        $allowance = Allowances::create($data);
+        $allowance = allowances::create($data);
         return response()->json(['data' => $allowance], 201);
     }
 
     public function show($id)
     {
-        $allowance = Allowances::with(['company:id,name', 'department:id,name'])->find($id);
+        $allowance = allowances::with(['company:id,name', 'department:id,name'])->find($id);
 
         if (!$allowance) {
             return response()->json(['message' => 'Allowance not found.'], 404);
@@ -98,7 +98,7 @@ class AllowancesController extends Controller
 
     public function update(Request $request, $id)
     {
-        $allowance = Allowances::find($id);
+        $allowance = allowances::find($id);
 
         if (!$allowance) {
             return response()->json(['message' => 'Allowance not found.'], 404);
@@ -171,7 +171,7 @@ class AllowancesController extends Controller
 
     public function destroy($id)
     {
-        $allowance = Allowances::find($id);
+        $allowance = allowances::find($id);
 
         if (!$allowance) {
             return response()->json(['message' => 'Allowance not found.'], 404);
@@ -183,7 +183,7 @@ class AllowancesController extends Controller
 
     public function getDepartmentsByCompany($companyId)
     {
-        $departments = Departments::where('company_id', $companyId)->get(['id', 'name']);
+        $departments = departments::where('company_id', $companyId)->get(['id', 'name']);
 
         if ($departments->isEmpty()) {
             return response()->json(['message' => 'No departments found for this company.'], 404);
@@ -194,7 +194,7 @@ class AllowancesController extends Controller
 
     public function getAllowancesByCompanyOrDepartment(Request $request)
     {
-        $query = Allowances::query();
+        $query = allowances::query();
 
         if ($request->has('company_id')) {
             $query->where('company_id', $request->company_id);
