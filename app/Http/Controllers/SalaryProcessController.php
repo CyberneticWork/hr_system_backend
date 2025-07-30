@@ -372,20 +372,29 @@ class SalaryProcessController extends Controller
                 return $carry + (float) $item['amount'];
             }, 0);
 
-            // 4. Sum Fixed Deductions (excluding loans)
+            // Calculate EPF/ETF base (basic + allowances - no pay)
+            $epfEtfBase = $adjustedBasic + $totalAllowances;
+
+            // 4. Calculate EPF employee contribution (8%) if enabled
+            $epfEmployeeDeduction = 0;
+            if ($employeeData['enable_epf_etf']) {
+                $epfEmployeeDeduction = $epfEtfBase * 0.08; // 8% EPF deduction
+            }
+
+            // 5. Calculate EPF employer contribution (12%) and ETF (3%) - for display only
+            $epfEmployerContribution = $employeeData['enable_epf_etf'] ? $epfEtfBase * 0.12 : 0;
+            $etfEmployerContribution = $employeeData['enable_epf_etf'] ? $epfEtfBase * 0.03 : 0;
+
+            // 6. Sum Fixed Deductions (excluding loans and EPF)
             $totalFixedDeductions = array_reduce($deductions, function ($carry, $item) {
                 return $carry + (float) $item['amount'];
             }, 0);
 
-            // 5. Calculate EPF/ETF if enabled
-            $epfDeduction = 0;
-            if ($employeeData['enable_epf_etf']) {
-                $epfDeduction = $basicSalary * 0.08; // 8% EPF deduction
-            }
+            // 7. Calculate Gross Salary (basic - no pay + allowances)
+            $grossSalary = $epfEtfBase;
 
-            // 6. Calculate Gross and Net Salary
-            $grossSalary = $adjustedBasic + $totalAllowances;
-            $totalDeductions = $totalFixedDeductions + $installmentAmount + $epfDeduction;
+            // 8. Calculate Net Salary (gross - EPF - deductions - loan)
+            $totalDeductions = $totalFixedDeductions + $installmentAmount + $epfEmployeeDeduction;
             $netSalary = $grossSalary - $totalDeductions;
 
             // Add calculated fields to response
@@ -396,9 +405,12 @@ class SalaryProcessController extends Controller
                 'per_day_salary' => $perDaySalary,
                 'no_pay_deduction' => $noPayDeduction,
                 'total_allowances' => $totalAllowances,
+                'epf_etf_base' => $epfEtfBase,
+                'epf_employee_deduction' => $epfEmployeeDeduction, // 8% EPF deduction from employee
+                'epf_employer_contribution' => $epfEmployerContribution, // 12% EPF contribution from employer
+                'etf_employer_contribution' => $etfEmployerContribution, // 3% ETF contribution from employer
                 'total_fixed_deductions' => $totalFixedDeductions,
                 'loan_installment' => $installmentAmount,
-                'epf_deduction' => $epfDeduction,
                 'gross_salary' => $grossSalary,
                 'total_deductions' => $totalDeductions,
                 'net_salary' => $netSalary
