@@ -12,10 +12,12 @@ return new class extends Migration {
     {
         Schema::create('deductions', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('department_id')->constrained('departments');
-            $table->foreignId('company_id')->constrained('companies');  // Add this line
             $table->string('deduction_code')->unique();
             $table->string('deduction_name');
+
+            $table->foreignId('department_id')->constrained('departments');
+            $table->foreignId('company_id')->constrained('companies');  // Add this line
+
             $table->text('description')->nullable();
             $table->decimal('amount', 10, 2)->default(0);
             $table->enum('status', ['active', 'inactive'])->default('active');

@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Resignation;
 use App\Models\ResignationDocument;
-use App\Models\Employee;
+use App\Models\employee;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
@@ -44,7 +44,7 @@ class ResignationController extends Controller
             return response()->json($validator->errors(), 422);
         }
 
-        $employee = Employee::findOrFail($request->employee_id);
+        $employee = employee::findOrFail($request->employee_id);
 
         $resignation = Resignation::create([
             'employee_id' => $request->employee_id,
@@ -60,7 +60,7 @@ class ResignationController extends Controller
         if ($request->hasFile('documents')) {
             foreach ($request->file('documents') as $document) {
                 $path = $document->store('employee/resignations'  , 'public');
-                
+
                 ResignationDocument::create([
                     'resignation_id' => $resignation->id,
                     'document_name' => $document->getClientOriginalName(),
@@ -92,10 +92,10 @@ class ResignationController extends Controller
         }
 
         $resignation = Resignation::findOrFail($id);
-        
+
         $resignation->update([
             'status' => $request->status,
-            'notes' => $request->notes, 
+            'notes' => $request->notes,
             'processed_by' => optional(Auth::user())->id,
             'processed_at' => now()
         ]);
@@ -119,7 +119,7 @@ class ResignationController extends Controller
         $uploadedDocuments = [];
         foreach ($request->file('documents') as $document) {
            $path = $document->store('employee/resignations' , 'public');
-            
+
             $uploadedDocument = ResignationDocument::create([
                 'resignation_id' => $resignation->id,
                 'document_name' => $document->getClientOriginalName(),
@@ -141,7 +141,7 @@ class ResignationController extends Controller
 
         // Delete file from storage
         Storage::delete(str_replace('/storage', 'public', $document->file_path));
-        
+
         $document->delete();
 
         return response()->json(['message' => 'Document deleted successfully']);
