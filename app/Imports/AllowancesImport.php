@@ -30,6 +30,14 @@ class AllowancesImport implements ToCollection, WithHeadingRow
                 continue;
             }
 
+            // Check if allowance_code already exists
+            if (
+                isset($normalizedRow['allowance_code']) &&
+                Allowances::where('allowance_code', $normalizedRow['allowance_code'])->exists()
+            ) {
+                continue; // Skip this row and continue with the next one
+            }
+
             // Convert Excel dates to proper format
             if (isset($normalizedRow['fixed_date']) && is_numeric($normalizedRow['fixed_date'])) {
                 $normalizedRow['fixed_date'] = $this->convertExcelDate($normalizedRow['fixed_date']);
@@ -44,7 +52,7 @@ class AllowancesImport implements ToCollection, WithHeadingRow
             }
 
             $validator = Validator::make($normalizedRow, [
-                'allowance_code' => 'required|unique:allowances,allowance_code',
+                'allowance_code' => 'required',  // Removed unique validation since we're handling it above
                 'allowance_name' => 'required|string|max:255',
                 'status' => 'required|in:active,inactive',
                 'category' => 'required|in:travel,bonus,performance,health,other',
@@ -159,7 +167,7 @@ class AllowancesImport implements ToCollection, WithHeadingRow
             $unixDate = ($excelDate - 25569) * 86400;
             return gmdate("Y-m-d", $unixDate);
         }
-        
+
         // Try to parse as date string if not numeric
         try {
             return date("Y-m-d", strtotime($excelDate));

@@ -48,6 +48,7 @@ Route::get('/emp/search', [EmployeeController::class, 'search']);
 Route::apiResource('loans', LoanController::class);
 Route::apiResource('allowances', AllowancesController::class);
 Route::get('/allowance/by-company-or-department', [AllowancesController::class, 'getAllowancesByCompanyOrDepartment']);
+Route::get('/deduction/by-company-or-department', [DeductionController::class, 'getDeductionsByCompanyOrDepartment']);
 
 Route::apiResource('deductions', DeductionController::class);
 Route::apiResource('leave-calendars', LeaveCalenderController::class);
@@ -101,9 +102,10 @@ Route::get('/time-cards/search-employee', [TimeCardController::class, 'searchByE
 Route::post('/attendance/import-excel', [TimeCardController::class, 'importExcel']);
 Route::get('/companies', [CompanyController::class, 'index']);
 Route::get('/attendance/absentees', [TimeCardController::class, 'fetchAbsentees']);
+Route::get('/attendance-template', [TimeCardController::class, 'downloadTemplate']);
 
 //get employees by month and company
-Route::get('/salary/process/employees-by-month', [SalaryProcessController::class, 'getEmployeesByMonthAndCompany']);
+Route::get('/salaryCal/employees', [SalaryProcessController::class, 'getEmployeesByMonthAndCompany']);
 Route::post('/salary/process/allowances', [SalaryProcessController::class, 'updateEmployeesAllowances']);
 
 Route::post('/attendance/mark-absentees', [TimeCardController::class, 'markAbsentees']);

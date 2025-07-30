@@ -13,6 +13,8 @@ use Illuminate\Support\Facades\Validator;
 use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\DB;
 use App\Models\absence;
+use App\Exports\AttendanceTemplateExport;
+
 // use Maatwebsite\Excel\Facades\Excel;
 
 class TimeCardController extends Controller
@@ -719,5 +721,10 @@ class TimeCardController extends Controller
         });
 
         return response()->json($absentees);
+    }
+
+    public function downloadTemplate()
+    {
+        return Excel::download(new AttendanceTemplateExport, 'attendance_template.xlsx');
     }
 }

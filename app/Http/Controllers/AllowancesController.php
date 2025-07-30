@@ -194,7 +194,7 @@ class AllowancesController extends Controller
 
     public function getAllowancesByCompanyOrDepartment(Request $request)
     {
-        $query = allowances::query();
+        $query = allowances::where('status', 'active');
 
         if ($request->has('company_id')) {
             $query->where('company_id', $request->company_id);
