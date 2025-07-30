@@ -147,8 +147,35 @@ class SalaryProcessController extends Controller
         $startDate = "{$year}-{$month}-01";
         $lastDay = date('t', strtotime($startDate));
         $endDate = "{$year}-{$month}-{$lastDay}";
-        $workingDaysInMonth = $lastDay; // Assuming all days are working days for simplicity
-
+        
+        // Calculate working days by checking leave_calendars for company holidays
+        $totalDaysInMonth = $lastDay;
+        
+        // Get company leaves for the specified month and company
+        $companyLeaves = DB::table('leave_calendars')
+            ->where('company_id', $company_id)
+            ->where(function($query) use ($startDate, $endDate) {
+                $query->where(function($q) use ($startDate, $endDate) {
+                    $q->where('start_date', '<=', $endDate)
+                      ->where('end_date', '>=', $startDate);
+                })->orWhereBetween('start_date', [$startDate, $endDate]);
+            })
+            ->whereNull('deleted_at')
+            ->get();
+        
+        // Count leave days that fall within the month
+        $leaveDaysCount = 0;
+        foreach ($companyLeaves as $leave) {
+            $leaveStart = max($startDate, $leave->start_date);
+            $leaveEnd = $leave->end_date ? min($endDate, $leave->end_date) : $leaveStart;
+            
+            // Calculate days between start and end dates (inclusive)
+            $leaveDaysCount += date_diff(date_create($leaveStart), date_create($leaveEnd))->days + 1;
+        }
+        
+        // Calculate actual working days
+        $workingDaysInMonth = $totalDaysInMonth - $leaveDaysCount;
+    
         // Build the query with all the data consolidated in one SQL statement
         $query = "
         SELECT
@@ -335,7 +362,7 @@ class SalaryProcessController extends Controller
                 $basicSalary = $basicSalary * (1 + ($incrementPercent / 100));
             }
 
-            // 2. Calculate No-Pay Deduction
+            // 2. Calculate No-Pay Deduction using actual working days
             $perDaySalary = $basicSalary / $workingDaysInMonth;
             $noPayDeduction = $approvedNoPayDays * $perDaySalary;
             $adjustedBasic = $basicSalary - $noPayDeduction;
@@ -388,6 +415,8 @@ class SalaryProcessController extends Controller
                 'company_id' => $company_id,
                 'department_id' => $department_id,
                 'count' => count($data),
+                'total_days_in_month' => $totalDaysInMonth,
+                'company_leave_days' => $leaveDaysCount,
                 'working_days_in_month' => $workingDaysInMonth
             ]
         ]);
