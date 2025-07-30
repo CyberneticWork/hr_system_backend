@@ -107,6 +107,7 @@ Route::get('/attendance-template', [TimeCardController::class, 'downloadTemplate
 //get employees by month and company
 Route::get('/salaryCal/employees', [SalaryProcessController::class, 'getEmployeesByMonthAndCompany']);
 Route::post('/salary/process/allowances', [SalaryProcessController::class, 'updateEmployeesAllowances']);
+Route::post('/salary/process/save', [SalaryProcessController::class, 'storeSalaryData']);
 
 Route::post('/attendance/mark-absentees', [TimeCardController::class, 'markAbsentees']);
 Route::get('/absentees', [ApiDataController::class, 'Absentees']);
