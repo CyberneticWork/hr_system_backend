@@ -45,6 +45,8 @@ class SalaryController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $salary = salary_process::findOrFail($id);
+        $salary->delete();
+        return response()->json($salary, 200);
     }
 }
