@@ -173,6 +173,8 @@ class SalaryProcessController extends Controller
             comp.ot_morning,
             comp.ot_evening,
             comp.enable_epf_etf,
+            comp.br1,
+            comp.br2,
 
             -- BR status
             CASE
@@ -259,26 +261,26 @@ class SalaryProcessController extends Controller
         }
 
         $query .= "
-        AND EXISTS (
-            SELECT 1 FROM rosters r
-            WHERE r.employee_id = e.id
-            AND (
-                (r.date_from <= ? AND r.date_to >= ?) OR
-                (r.date_from BETWEEN ? AND ?) OR
-                (r.date_to BETWEEN ? AND ?) OR
-                (r.date_from IS NULL AND r.date_to IS NULL)
-            )
+    AND EXISTS (
+        SELECT 1 FROM rosters r
+        WHERE r.employee_id = e.id
+        AND (
+            (r.date_from <= ? AND r.date_to >= ?) OR
+            (r.date_from BETWEEN ? AND ?) OR
+            (r.date_to BETWEEN ? AND ?) OR
+            (r.date_from IS NULL AND r.date_to IS NULL)
         )
-        GROUP BY
-            e.id, e.attendance_employee_no, e.full_name,
-            c.name, d.name, sd.name,
-            comp.basic_salary, comp.br1, comp.br2,
-            comp.increment_active, comp.increment_value,
-            comp.increment_effected_date, comp.ot_morning,
-            comp.ot_evening, comp.enable_epf_etf,
-            lo.installment_count, lo.installment_amount,
-            c.id, oa.department_id
-    ";
+    )
+    GROUP BY
+        e.id, e.attendance_employee_no, e.full_name,
+        c.name, d.name, sd.name,
+        comp.basic_salary, comp.br1, comp.br2,
+        comp.increment_active, comp.increment_value,
+        comp.increment_effected_date, comp.ot_morning,
+        comp.ot_evening, comp.enable_epf_etf,
+        lo.installment_count, lo.installment_amount,
+        c.id, oa.department_id
+";
 
         // Prepare parameters
         $params = [$startDate, $endDate, $company_id];
@@ -304,6 +306,22 @@ class SalaryProcessController extends Controller
 
             // Calculate salary components
             $basicSalary = (float) $employeeData['basic_salary'];
+
+            // Add BR allowances to basic salary
+            $brAllowance = 0;
+            if ($result->br1 == 1 && $result->br2 == 1) {
+                // Both BR1 and BR2
+                $brAllowance = 3500;
+            } elseif ($result->br1 == 1) {
+                // BR1 Only
+                $brAllowance = 1000;
+            } elseif ($result->br2 == 1) {
+                // BR2 Only
+                $brAllowance = 2500;
+            }
+
+            $basicSalary += $brAllowance;
+
             $approvedNoPayDays = (int) $employeeData['approved_no_pay_days'];
             $installmentAmount = (float) ($employeeData['installment_amount'] ?? 0);
 
@@ -346,6 +364,7 @@ class SalaryProcessController extends Controller
             // Add calculated fields to response
             $employeeData['salary_breakdown'] = [
                 'basic_salary' => $basicSalary,
+                'br_allowance' => $brAllowance,
                 'adjusted_basic' => $adjustedBasic,
                 'per_day_salary' => $perDaySalary,
                 'no_pay_deduction' => $noPayDeduction,
