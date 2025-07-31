@@ -60,6 +60,8 @@ Route::apiResource('rosters', RosterController::class);
 Route::apiResource('overtime', OvertimeController::class);
 Route::apiResource('leave-masters', LeaveMasterController::class);
 Route::apiResource('salary-process', SalaryProcessController::class);
+Route::get('salary/processed', [SalaryProcessController::class, 'getProcessedSalaries']);
+Route::post('/salary/process/mark-issued', [SalaryProcessController::class, 'markAsIssued']);
 Route::apiResource('salary', SalaryController::class);
 Route::get('/Leave-Master/{employeeId}/counts', [LeaveMasterController::class, 'getLeaveRecordCountsByEmployee']);
 

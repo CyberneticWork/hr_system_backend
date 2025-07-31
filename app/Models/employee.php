@@ -100,5 +100,9 @@ class employee extends Model
     {
         return $this->hasMany(NoPayRecord::class);
     }
+    public function salaryProcesses()
+    {
+        return $this->hasMany(salary_process::class, 'employee_id');
+    }
 
 }

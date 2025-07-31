@@ -53,6 +53,14 @@ class salary_process extends Model
         'salary_breakdown' => 'json',
         'increment_effected_date' => 'date',
     ];
+    public function employee()
+    {
+        return $this->belongsTo(Employee::class, 'employee_id');
+    }
+    public function compensation()
+    {
+        return $this->belongsTo(compensation::class, 'employee_id');
+    }
 
 
 }
