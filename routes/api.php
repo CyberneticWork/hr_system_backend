@@ -61,6 +61,8 @@ Route::apiResource('overtime', OvertimeController::class);
 Route::apiResource('leave-masters', LeaveMasterController::class);
 Route::apiResource('salary-process', SalaryProcessController::class);
 Route::apiResource('salary', SalaryController::class);
+
+
 Route::get('/Leave-Master/{employeeId}/counts', [LeaveMasterController::class, 'getLeaveRecordCountsByEmployee']);
 
 Route::get('/Leave-Master/status/pending', [LeaveMasterController::class, 'getPendingLeaveRecords']);
