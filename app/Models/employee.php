@@ -104,5 +104,9 @@ class employee extends Model
     {
         return $this->hasMany(salary_process::class, 'employee_id');
     }
+    public function overTimes()
+    {
+        return $this->hasMany(over_time::class);
+    }
 
 }
