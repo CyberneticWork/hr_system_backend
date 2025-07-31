@@ -100,5 +100,9 @@ class employee extends Model
     {
         return $this->hasMany(NoPayRecord::class);
     }
+    public function overTimes()
+    {
+        return $this->hasMany(over_time::class);
+    }
 
 }
