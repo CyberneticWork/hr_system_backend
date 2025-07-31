@@ -51,6 +51,25 @@ class SalaryProcessController extends Controller
         return response()->json($salaryData, 201);
     }
 
+    public function updateSlaryStatus(Request $request)
+    {
+
+        if ($request->has('status') && $request->status == 'processed') {
+            $salaryData = salary_process::where('status', 'pending')->update([
+                'status' => 'processed',
+            ]);
+            return response()->json($salaryData, 200);
+        }
+        if ($request->has('status') && $request->status == 'issued') {
+            $salaryData = salary_process::where('status', 'processed')->update([
+                'status' => 'issued',
+            ]);
+            return response()->json($salaryData, 200);
+        }
+        return response()->json(['message' => 'Invalid status'], 400);
+
+    }
+
     /**
      * Display the specified resource.
      */
@@ -528,56 +547,62 @@ class SalaryProcessController extends Controller
             return response()->json(['message' => 'Error saving salary data: ' . $e->getMessage()], 500);
         }
     }
-public function getProcessedSalaries()
-{
-    $processedSalaries = salary_process::where('status', 'processed')
-        ->with(['employee' => function($query) {
-            $query->select('id', 'full_name', 'attendance_employee_no')
-                ->with(['compensation' => function($q) {
-                    $q->select('employee_id', 'basic_salary', 'enable_epf_etf');
-                }])
-                ->with(['compensation' => function($q) {
-                    $q->select('employee_id', 'bank_name', 'bank_account_no', 'branch_name');
-                }]);
-        }])
-        ->orderBy('created_at', 'desc')
-        ->get();
+    public function getProcessedSalaries()
+    {
+        $processedSalaries = salary_process::where('status', 'processed')
+            ->with([
+                'employee' => function ($query) {
+                    $query->select('id', 'full_name', 'attendance_employee_no')
+                        ->with([
+                            'compensation' => function ($q) {
+                                $q->select('employee_id', 'basic_salary', 'enable_epf_etf');
+                            }
+                        ])
+                        ->with([
+                            'compensation' => function ($q) {
+                                $q->select('employee_id', 'bank_name', 'bank_account_no', 'branch_name');
+                            }
+                        ]);
+                }
+            ])
+            ->orderBy('created_at', 'desc')
+            ->get();
 
-    // Format the response
-    $response = $processedSalaries->map(function($salary) {
-        return [
-            'id' => $salary->id,
-            'employee_id' => $salary->employee_id,
-            'employee_no' => $salary->employee_no,
-            'full_name' => $salary->full_name,
-            'company_name' => $salary->company_name,
-            'department_name' => $salary->department_name,
-            'basic_salary' => $salary->basic_salary,
-            'month' => $salary->month,
-            'year' => $salary->year,
-            'status' => $salary->status,
-            'compensation' => $salary->employee->compensation ?? null,
-            'bank_details' => $salary->employee->bankDetails ?? null,
-            'salary_breakdown' => $salary->salary_breakdown,
-            'allowances' => $salary->allowances,
-            'deductions' => $salary->deductions
-        ];
-    });
+        // Format the response
+        $response = $processedSalaries->map(function ($salary) {
+            return [
+                'id' => $salary->id,
+                'employee_id' => $salary->employee_id,
+                'employee_no' => $salary->employee_no,
+                'full_name' => $salary->full_name,
+                'company_name' => $salary->company_name,
+                'department_name' => $salary->department_name,
+                'basic_salary' => $salary->basic_salary,
+                'month' => $salary->month,
+                'year' => $salary->year,
+                'status' => $salary->status,
+                'compensation' => $salary->employee->compensation ?? null,
+                'bank_details' => $salary->employee->bankDetails ?? null,
+                'salary_breakdown' => $salary->salary_breakdown,
+                'allowances' => $salary->allowances,
+                'deductions' => $salary->deductions
+            ];
+        });
 
-    return response()->json($response);
-}
+        return response()->json($response);
+    }
 
-public function markAsIssued(Request $request)
-{
-    $validated = $request->validate([
-        'employee_ids' => 'required|array',
-        'employee_ids.*' => 'exists:salary_processes,employee_id'
-    ]);
+    public function markAsIssued(Request $request)
+    {
+        $validated = $request->validate([
+            'employee_ids' => 'required|array',
+            'employee_ids.*' => 'exists:salary_processes,employee_id'
+        ]);
 
-    salary_process::whereIn('employee_id', $validated['employee_ids'])
-        ->where('status', 'processed')
-        ->update(['status' => 'issued']);
+        salary_process::whereIn('employee_id', $validated['employee_ids'])
+            ->where('status', 'processed')
+            ->update(['status' => 'issued']);
 
-    return response()->json(['message' => 'Payslips marked as issued successfully']);
-}
+        return response()->json(['message' => 'Payslips marked as issued successfully']);
+    }
 }
