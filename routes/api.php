@@ -136,3 +136,4 @@ Route::get('/roster/search', [RosterController::class, 'search']);
 // Deductions import/export routes
 Route::get('/deductions/template/download', [DeductionController::class, 'downloadTemplate']);
 Route::post('/deductions/import', [DeductionController::class, 'import']);
+Route::get('/loans/employee-by-number/{number}', [LoanController::class, 'getEmployeeByNumber']);
