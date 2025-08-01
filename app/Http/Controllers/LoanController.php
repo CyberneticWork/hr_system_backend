@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\loans;
-
+use App\Models\employee; 
 class LoanController extends Controller
 {
     /**
@@ -59,5 +59,20 @@ class LoanController extends Controller
     public function destroy(string $id)
     {
         //
+    }
+
+    /**
+     * Get employee details by employee number.
+     */
+    public function getEmployeeByNumber($number)
+    {
+        $employee = employee::where('attendance_employee_no', $number)->first();
+        if (!$employee) {
+            return response()->json(['message' => 'Employee not found'], 404);
+        }
+        return response()->json([
+            'id' => $employee->id,
+            'full_name' => $employee->full_name,
+        ]);
     }
 }

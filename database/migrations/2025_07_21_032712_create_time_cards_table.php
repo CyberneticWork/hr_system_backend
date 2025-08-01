@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('time_cards', function (Blueprint $table) {
             $table->id();
             $table->foreignId('employee_id')->constrained('employees')->onDelete('cascade')->nullable();
+            $table->datetime('fingerprint_clock')->nullable();
             $table->time('time')->nullable();
             $table->date('date')->nullable();
             $table->string('working_hours')->nullable();

@@ -12,30 +12,36 @@ return new class extends Migration {
     {
         Schema::create('salary_processes', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('employee_id')->constrained('employees')->onDelete('cascade');
-            $table->date('process_date');
-            $table->decimal('basic', 10, 2);
-            $table->decimal('basic_salary', 10, 2);
 
-            $table->foreignId('no_pay_records_id')->nullable()->constrained('no_pay_records')->onDelete('cascade');
-            $table->foreignId('over_times_id')->constrained('over_times')->onDelete('cascade');
-            $table->foreignId('allowances_id')->constrained('allowances')->onDelete('cascade');
-            $table->foreignId('loans_id')->nullable()->constrained('loans')->onDelete('cascade');
-            $table->foreignId('deductions_id')->constrained('deductions')->onDelete('cascade')->nullable();
+            $table->integer('employee_id');
+            $table->integer('employee_no');
+            $table->string('full_name');
+            $table->string('company_name');
+            $table->string('department_name');
+            $table->string('sub_department_name')->nullable();
+            $table->decimal('basic_salary', 12, 2);
+            $table->boolean('increment_active')->default(false);
+            $table->string('increment_value')->nullable();
+            $table->date('increment_effected_date')->nullable();
+            $table->boolean('ot_morning')->default(false);
+            $table->boolean('ot_evening')->default(false);
+            $table->boolean('enable_epf_etf')->default(false);
+            $table->boolean('br1')->default(false);
+            $table->boolean('br2')->default(false);
+            $table->string('br_status');
+            $table->decimal('total_loan_amount', 12, 2)->default(0);
+            $table->integer('installment_count')->nullable();
+            $table->decimal('installment_amount', 12, 2)->nullable();
+            $table->integer('approved_no_pay_days')->default(0);
+            $table->json('allowances')->nullable();
+            $table->json('deductions')->nullable();
+            $table->json('salary_breakdown')->nullable();
+            $table->string('month');
+            $table->string('year');
 
-
-            $table->decimal('gross_amount', 10, 2)->default(0);
-            $table->decimal('salary_advance', 10, 2)->default(0);
-            $table->decimal('net_salary', 10, 2)->default(0);
-            $table->enum('status', ['Pending', 'Processed'])->default('Pending');
-            $table->foreignId('processed_by')->nullable()->constrained('users');
-
+            $table->enum('status', ['pending', 'processed', 'issued'])->default('pending');
             $table->softDeletes();
             $table->timestamps();
-
-            $table->index(['employee_id', 'process_date']);
-            $table->index(['status']);
-            $table->index(['processed_by']);
         });
     }
 
