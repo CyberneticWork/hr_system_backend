@@ -457,7 +457,7 @@ class SalaryProcessController extends Controller
     {
         $employeeIDs = $request->selectedEmployees; // This is an array of IDs
         $type = $request->bulkActionType;
-        $amount = $request->bulkActionAmount || null; // Changed from 'amount' to match JSON
+        $amount = $request->bulkActionAmount; // Changed from 'amount' to match JSON
 
         if (!is_array($employeeIDs) || empty($employeeIDs)) {
             return response()->json(['error' => 'No employees selected'], 400);
