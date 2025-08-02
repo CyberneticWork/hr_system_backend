@@ -24,7 +24,7 @@ class NoPayRecord extends Model
 
     public function employee()
     {
-        return $this->belongsTo(Employee::class)->with('organizationAssignment');
+        return $this->belongsTo(employee::class)->with('organizationAssignment');
     }
 
     public function processedBy()

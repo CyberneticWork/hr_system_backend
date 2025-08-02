@@ -17,6 +17,6 @@ class absence extends Model
 
     public function employee()
     {
-        return $this->belongsTo(\App\Models\employee::class, 'employee_id');
+        return $this->belongsTo(employee::class, 'employee_id');
     }
 }

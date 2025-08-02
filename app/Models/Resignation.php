@@ -31,7 +31,7 @@ class Resignation extends Model
 
     public function employee()
     {
-        return $this->belongsTo(Employee::class);
+        return $this->belongsTo(employee::class);
     }
 
     public function processedBy()
