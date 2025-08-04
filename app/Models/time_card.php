@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 class time_card extends Model
 {
     protected $fillable = [
-        'employee_id', 'time', 'date', 'working_hours', 'entry', 'status'
+        'employee_id', 'time', 'date', 'working_hours', 'entry', 'status','fingerprint_clock','actual_date'
     ];
 
     public function employee()

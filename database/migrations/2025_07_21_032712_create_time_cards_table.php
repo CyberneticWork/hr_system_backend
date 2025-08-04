@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('working_hours')->nullable();
             $table->string('entry')->nullable();
             $table->string('status')->nullable();
+            $table->date('actual_date')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });
