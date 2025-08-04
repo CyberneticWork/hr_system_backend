@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\loans;
 use App\Models\Resignation;
 use App\Models\ResignationDocument;
 use App\Models\employee;
@@ -102,6 +103,12 @@ class ResignationController extends Controller
 
         // If approved, update employee status
         if ($request->status === 'approved') {
+
+            $loanDetails = loans::where('employee_id', $resignation->employee_id)->get();
+
+            if ($loanDetails->status == "active") {
+                return response()->json(['message' => 'Employee has active loans. Cannot approve resignation.'], 422);
+            }
             $employee = employee::findOrFail($resignation->employee_id);
             $employee->update(['is_active' => false]);
 
