@@ -28,7 +28,7 @@ class TimeCardController extends Controller
                     'id' => $card->id, // <-- Add this line
                     'empNo' => $card->employee->attendance_employee_no ?? null,
                     'name' => $card->employee->full_name ?? null,
-                    'fingerprintClock' => null, // Update if you have this field
+                    'fingerprintClock' => $card->fingerprint_clock?? null, // Update if you have this field
                     'time' => $card->time,
                     'date' => $card->date,
                     'entry' => $card->entry,
@@ -51,7 +51,6 @@ class TimeCardController extends Controller
             'status' => 'required',
         ]);
 
-        // --- Roster/shift assignment check (same as attendance) ---
         $employee = employee::find($validated['employee_id']);
         if (!$employee) {
             return response()->json(['message' => 'Employee not found'], 404);
@@ -120,35 +119,99 @@ class TimeCardController extends Controller
         if (!$roster) {
             return response()->json(['message' => 'No shift/roster assigned for this employee on this date'], 422);
         }
-        // --- End roster/shift assignment check ---
 
+        $shift = shifts::find($roster->shift_code);
+        if (!$shift) {
+            return response()->json(['message' => 'Shift not found'], 404);
+        }
+
+        try {
+            $inputTime = Carbon::createFromFormat('H:i:s', $validated['time']);
+        } catch (\Exception $e) {
+            // Try H:i format if H:i:s fails
+            try {
+                $inputTime = Carbon::createFromFormat('H:i', $validated['time']);
+            } catch (\Exception $ex) {
+                return response()->json(['message' => 'Invalid time format. Please use HH:mm or HH:mm:ss'], 422);
+            }
+        }
+        $storeTime = $inputTime->format('H:i:s');
+        $shiftEnd = Carbon::parse($shift->end_time);
+
+        $entryType = (int)$validated['entry'];
+        $status = strtoupper($validated['status']);
         $working_hours = null;
+        $actual_date = null;
 
-        if (strtoupper($validated['status']) === 'OUT') {
-            // Find the IN record for this employee and date
-            $inCard = time_card::where('employee_id', $validated['employee_id'])
-                ->where('date', $validated['date'])
+        if ($status === 'OUT') {
+            // Find last IN record for this employee
+            $lastInCard = time_card::where('employee_id', $employee->id)
                 ->where('status', 'IN')
-                ->orderBy('time', 'asc')
+                ->orderBy('date', 'desc')
+                ->orderBy('time', 'desc')
                 ->first();
 
-            if ($inCard) {
-                $inTime = Carbon::parse($inCard->time);
-                $outTime = Carbon::parse($validated['time']);
-                $working_hours = round($inTime->floatDiffInHours($outTime), 2);
+            if ($lastInCard) {
+                $lastInDate = Carbon::parse($lastInCard->date);
+                $currentDate = Carbon::parse($validated['date']);
+
+                if ($lastInDate->eq($currentDate)) {
+                    // Same day: normal OUT/Leave logic
+                    $inTime = Carbon::parse($lastInCard->time);
+                    $outTime = $inputTime;
+                    $working_hours = round($inTime->floatDiffInHours($outTime), 2);
+
+                    if ($outTime->lt($shiftEnd)) {
+                        $entryType = 0; // Leave
+                        $status = 'Leave';
+                    } else {
+                        $entryType = 2; // OUT
+                        $status = 'OUT';
+                    }
+                } else {
+                    // Different day: cross-day OUT
+                    $inDateTime = Carbon::parse($lastInCard->date . ' ' . $lastInCard->time);
+                    $outDateTime = Carbon::parse($validated['date'] . ' ' . $validated['time']);
+                    $working_hours = round($inDateTime->floatDiffInHours($outDateTime), 2);
+
+                    $entryType = 2; // OUT
+                    $status = 'OUT';
+                    $actual_date = $lastInCard->date;
+                }
             }
+        } else {
+            $entryType = 1;
+            $status = 'IN';
+            $working_hours = null;
+        }
+
+        $fingerprintClock = now();
+
+        $duplicate = time_card::where('employee_id', $employee->id)
+            ->where('date', $validated['date'])
+            ->where('time', $storeTime)
+            ->where('entry', $entryType)
+            ->where('status', $status)
+            ->exists();
+
+        if ($duplicate) {
+            return response()->json([
+                'message' => 'Duplicate attendance record. This entry already exists.',
+            ], 409);
         }
 
         $timeCard = time_card::create([
-            'employee_id' => $validated['employee_id'],
-            'time' => $validated['time'],
+            'employee_id' => $employee->id,
+            'time' => $storeTime,
             'date' => $validated['date'],
             'working_hours' => $working_hours,
-            'entry' => $validated['entry'],
-            'status' => $validated['status'],
+            'entry' => $entryType,
+            'status' => $status,
+            'fingerprint_clock' => $fingerprintClock,
+            'actual_date' => $actual_date,
         ]);
 
-        if ($validated['status'] == "OUT") {
+        if ($status == "OUT") {
             $shift_code = $employee->rosters[0]->shift_code ?? null;
             $shift = shifts::find($shift_code);
             $shift_duration = $shift ? Carbon::parse($shift->start_time)->diffInHours(Carbon::parse($shift->end_time)) : null;
@@ -252,57 +315,86 @@ class TimeCardController extends Controller
             return response()->json(['message' => 'Shift not found'], 404);
         }
 
-        $existingCards = time_card::where('employee_id', $employee->id)
-            ->where('date', $request->date)
-            ->orderBy('created_at')
-            ->get();
-
         $inputTime = Carbon::createFromFormat('H:i:s', $request->time);
-        $shiftStart = Carbon::parse($shift->start_time);
+
+        // Prevent duplicate/close attendance for this employee (±5 min)
+        $recentCard = time_card::where('employee_id', $employee->id)
+            ->where('date', $request->date)
+            ->where(function ($q) use ($inputTime) {
+                $q->whereBetween('time', [
+                    $inputTime->copy()->subMinutes(5)->format('H:i:s'),
+                    $inputTime->copy()->addMinutes(5)->format('H:i:s')
+                ]);
+            })
+            ->orderBy('time', 'desc')
+            ->first();
+
+        if ($recentCard) {
+            return response()->json([
+                'message' => 'You cannot mark attendance within 5 minutes of your previous record.'
+            ], 409);
+        }
+
+        // Find the last attendance record for this employee
+        $lastCard = time_card::where('employee_id', $employee->id)
+            ->orderBy('date', 'desc')
+            ->orderBy('time', 'desc')
+            ->first();
+
+        $entryType = 1; // Default to IN
+        $status = 'IN';
+        $working_hours = null;
+        $storeTime = $inputTime->format('H:i:s');
+        $actual_date = null;
         $shiftEnd = Carbon::parse($shift->end_time);
 
-        // IN logic: allow only if within start_time - 1min to start_time + 1min
-        if ($existingCards->count() == 0) {
-            $startWindowStart = $shiftStart->copy()->subMinutes(30);
-            $startWindowEnd = $shiftStart->copy()->addMinutes(30);
+        if ($lastCard && $lastCard->status === 'IN') {
+            $lastInDate = Carbon::parse($lastCard->date);
+            $currentDate = Carbon::parse($request->date);
 
-            if ($inputTime->lt($startWindowStart) || $inputTime->gt($startWindowEnd)) {
-                return response()->json(['message' => 'IN time must be within 30 minutes after shift start time'], 422);
-            }
+            if ($lastInDate->eq($currentDate)) {
+                // Same day: normal OUT/Leave logic
+                $inTime = Carbon::parse($lastCard->time);
+                $outTime = $inputTime;
+                $working_hours = round($inTime->floatDiffInHours($outTime), 2);
 
-            $entryType = 1; // IN
-            $working_hours = null;
-
-            // When saving IN as shift start time:
-            $storeTime = $shiftStart->format('H:i:s');
-        }
-        // OUT logic: allow only if not within IN window
-        elseif ($existingCards->count() == 1) {
-            // Prevent OUT within the IN window
-            $startWindowStart = $shiftStart->copy()->subMinutes(30);
-            $startWindowEnd = $shiftStart->copy()->addMinutes(30);
-
-            if ($inputTime->gte($startWindowStart) && $inputTime->lte($startWindowEnd)) {
-                return response()->json(['message' => 'OUT cannot be marked within IN window (shift start ±30 min)'], 422);
-            }
-
-            $inTime = Carbon::parse($existingCards->first()->time);
-            $outTime = $inputTime;
-            $working_hours = round($inTime->floatDiffInHours($outTime), 2);
-
-            // Check if OUT time is less than shift end time
-            if ($outTime->lt($shiftEnd)) {
-                $entryType = 0; // Leave
-                $status = 'Leave';
+                if ($outTime->lt($shiftEnd)) {
+                    $entryType = 0; // Leave
+                    $status = 'Leave';
+                } else {
+                    $entryType = 2; // OUT
+                    $status = 'OUT';
+                }
             } else {
+                // Different day: cross-day OUT
+                $inDateTime = Carbon::parse($lastCard->date . ' ' . $lastCard->time);
+                $outDateTime = Carbon::parse($request->date . ' ' . $request->time);
+                $working_hours = round($inDateTime->floatDiffInHours($outDateTime), 2);
+
                 $entryType = 2; // OUT
                 $status = 'OUT';
+                $actual_date = $lastCard->date; // Save the last IN's date to actual_date
             }
-
-            // When saving OUT:
-            $storeTime = $inputTime->format('H:i:s');
         } else {
-            return response()->json(['message' => 'Attendance already marked IN and OUT for today'], 409);
+            // No previous IN, or last was OUT/Leave: this is a new IN
+            $entryType = 1;
+            $status = 'IN';
+            $working_hours = null;
+        }
+
+        $fingerprintClock = now();
+
+        $duplicate = time_card::where('employee_id', $employee->id)
+            ->where('date', $request->date)
+            ->where('time', $storeTime)
+            ->where('entry', $entryType)
+            ->where('status', $status)
+            ->exists();
+
+        if ($duplicate) {
+            return response()->json([
+                'message' => 'Duplicate attendance record. This entry already exists.',
+            ], 409);
         }
 
         $timeCard = time_card::create([
@@ -311,11 +403,13 @@ class TimeCardController extends Controller
             'date' => $request->date,
             'working_hours' => $working_hours,
             'entry' => $entryType,
-            'status' => $entryType == 1 ? 'IN' : $status,
+            'status' => $status,
+            'fingerprint_clock' => $fingerprintClock,
+            'actual_date' => $actual_date, // will be null unless cross-day OUT
         ]);
 
         return response()->json([
-            'message' => 'Attendance marked as ' . ($entryType == 1 ? 'IN' : $status),
+            'message' => 'Attendance marked as ' . $status,
             'data' => $timeCard,
             'employee' => [
                 'id' => $employee->id,
@@ -506,11 +600,13 @@ class TimeCardController extends Controller
         $request->validate([
             'file' => 'required|file|mimes:xlsx,xls',
             'company_id' => 'required|exists:companies,id',
-            'date' => 'required|date',
+            'from_date' => 'required|date',
+            'to_date' => 'nullable|date|after_or_equal:from_date',
         ]);
 
         $companyId = $request->input('company_id');
-        $importDate = $request->input('date');
+        $fromDate = $request->input('from_date');
+        $toDate = $request->input('to_date');
 
         $path = $request->file('file')->getRealPath();
         $rows = Excel::toArray([], $path)[0];
@@ -527,11 +623,28 @@ class TimeCardController extends Controller
                 if ($index === 0) continue; // skip header row
 
                 $nic = trim($row[0]);
-                $date = $importDate ?: trim($row[1]);
+                $excelDate = trim($row[1]);
                 $rawTime = trim($row[2]);
                 $entry = trim($row[3]);
                 $status = trim($row[4]);
                 $reason = isset($row[5]) ? trim($row[5]) : null;
+
+                // Normalize date from Excel (supports both Excel serial and string)
+                try {
+                    if (is_numeric($excelDate)) {
+                        $unixDate = ($excelDate - 25569) * 86400;
+                        $date = gmdate("Y-m-d", $unixDate);
+                    } else {
+                        $date = date("Y-m-d", strtotime($excelDate));
+                    }
+                } catch (\Exception $ex) {
+                    $results['errors'][] = "Row $index: Invalid date format";
+                    continue;
+                }
+
+                // Only process if date is within range
+                if ($date < $fromDate) continue;
+                if ($toDate && $date > $toDate) continue;
 
                 // Parse time from Excel
                 try {
@@ -628,27 +741,60 @@ class TimeCardController extends Controller
 
                 // Attendance logic
                 if (in_array(strtoupper($status), ['IN', 'OUT', 'LEAVE'])) {
+                    // Use store logic for attendance
+                    $entryType = (int)$entry;
                     $working_hours = null;
-                    if (strtoupper($status) === 'OUT') {
-                        // Find IN record for working hours calculation
-                        $inCard = time_card::where('employee_id', $employee->id)
-                            ->where('date', $date)
+                    $actual_date = null;
+                    $statusUpper = strtoupper($status);
+
+                    if ($statusUpper === 'OUT') {
+                        // Find last IN record for this employee
+                        $lastInCard = time_card::where('employee_id', $employee->id)
                             ->where('status', 'IN')
-                            ->orderBy('time', 'asc')
+                            ->orderBy('date', 'desc')
+                            ->orderBy('time', 'desc')
                             ->first();
-                        if ($inCard) {
-                            $inTime = Carbon::parse($inCard->time);
-                            $outTime = Carbon::parse($time);
-                            $working_hours = round($inTime->floatDiffInHours($outTime), 2);
+
+                        if ($lastInCard) {
+                            $lastInDate = Carbon::parse($lastInCard->date);
+                            $currentDate = Carbon::parse($date);
+
+                            if ($lastInDate->eq($currentDate)) {
+                                // Same day: normal OUT/Leave logic
+                                $inTime = Carbon::parse($lastInCard->time);
+                                $outTime = Carbon::parse($time);
+                                $working_hours = round($inTime->floatDiffInHours($outTime), 2);
+
+                                if ($outTime->lt(Carbon::parse($shift->end_time))) {
+                                    $entryType = 0; // Leave
+                                    $statusUpper = 'Leave';
+                                } else {
+                                    $entryType = 2; // OUT
+                                    $statusUpper = 'OUT';
+                                }
+                            } else {
+                                // Different day: cross-day OUT
+                                $inDateTime = Carbon::parse($lastInCard->date . ' ' . $lastInCard->time);
+                                $outDateTime = Carbon::parse($date . ' ' . $time);
+                                $working_hours = round($inDateTime->floatDiffInHours($outDateTime), 2);
+
+                                $entryType = 2; // OUT
+                                $statusUpper = 'OUT';
+                                $actual_date = $lastInCard->date;
+                            }
                         }
+                    } else {
+                        $entryType = 1;
+                        $statusUpper = 'IN';
+                        $working_hours = null;
                     }
 
                     // Prevent duplicate time_card
                     $exists = time_card::where('employee_id', $employee->id)
                         ->where('date', $date)
                         ->where('time', $time)
-                        ->where('entry', $entry)
-                        ->where('status', strtoupper($status))
+                        ->where('entry', $entryType)
+                        ->where('status', $statusUpper)
                         ->exists();
 
                     if (!$exists) {
@@ -657,8 +803,9 @@ class TimeCardController extends Controller
                             'time' => $time,
                             'date' => $date,
                             'working_hours' => $working_hours,
-                            'entry' => $entry,
-                            'status' => strtoupper($status),
+                            'entry' => $entryType,
+                            'status' => $statusUpper,
+                            'actual_date' => $actual_date,
                         ]);
                         $results['imported']++;
                     }
