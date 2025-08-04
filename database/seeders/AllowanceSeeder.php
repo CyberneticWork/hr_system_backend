@@ -24,7 +24,7 @@ class AllowanceSeeder extends Seeder
             ['Meal Allowance', 'other'],
             ['Transportation Allowance', 'travel'],
             ['Annual Bonus', 'bonus'],
-            ['Overtime Pay', 'perfomance'],
+            ['Overtime Pay', 'performance'],
             ['Housing Allowance', 'other'],
         ];
 
