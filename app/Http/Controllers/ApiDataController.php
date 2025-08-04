@@ -109,9 +109,10 @@ class ApiDataController extends Controller
             return response()->json(['message' => 'Sub-department not found'], 404);
         }
 
-        $employees = employee::whereHas('organizationAssignment', function ($query) use ($id) {
-            $query->where('sub_department_id', $id);
-        })->get(['id', 'full_name']);
+        $employees = employee::where('is_active', 1)
+            ->whereHas('organizationAssignment', function ($query) use ($id) {
+                $query->where('sub_department_id', $id);
+            })->get(['id', 'full_name']);
 
         return response()->json($employees, 200);
     }

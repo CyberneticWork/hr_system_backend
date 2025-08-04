@@ -59,7 +59,7 @@ class ResignationController extends Controller
         // Handle document uploads
         if ($request->hasFile('documents')) {
             foreach ($request->file('documents') as $document) {
-                $path = $document->store('employee/resignations'  , 'public');
+                $path = $document->store('employee/resignations', 'public');
 
                 ResignationDocument::create([
                     'resignation_id' => $resignation->id,
@@ -100,7 +100,16 @@ class ResignationController extends Controller
             'processed_at' => now()
         ]);
 
+        // If approved, update employee status
+        if ($request->status === 'approved') {
+            $employee = employee::findOrFail($resignation->employee_id);
+            $employee->update(['is_active' => false]);
+
+        }
+
+
         return response()->json($resignation);
+
     }
 
     public function uploadDocuments(Request $request, $id)
@@ -118,7 +127,7 @@ class ResignationController extends Controller
 
         $uploadedDocuments = [];
         foreach ($request->file('documents') as $document) {
-           $path = $document->store('employee/resignations' , 'public');
+            $path = $document->store('employee/resignations', 'public');
 
             $uploadedDocument = ResignationDocument::create([
                 'resignation_id' => $resignation->id,
