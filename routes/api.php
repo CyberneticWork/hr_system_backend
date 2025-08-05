@@ -39,7 +39,7 @@ Route::middleware('auth:sanctum')->get('/logout', function (Request $request) {
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
 
-Route::get('/test', [AuthController::class, 'test']);
+// Route::get('/test', [AuthController::class, 'test']);
 
 Route::apiResource('users', UserController::class);
 Route::apiResource('shifts', ShiftController::class);
@@ -137,3 +137,5 @@ Route::get('/roster/search', [RosterController::class, 'search']);
 Route::get('/deductions/template/download', [DeductionController::class, 'downloadTemplate']);
 Route::post('/deductions/import', [DeductionController::class, 'import']);
 Route::get('/loans/employee-by-number/{number}', [LoanController::class, 'getEmployeeByNumber']);
+
+Route::get('/test/{id}', [ResignationController::class, 'testFunction']);

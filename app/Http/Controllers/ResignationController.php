@@ -101,22 +101,29 @@ class ResignationController extends Controller
             'processed_at' => now()
         ]);
 
-        // If approved, update employee status
-        if ($request->status === 'approved') {
 
-            $loanDetails = loans::where('employee_id', $resignation->employee_id)->get();
-
-            if ($loanDetails->status == "active") {
-                return response()->json(['message' => 'Employee has active loans. Cannot approve resignation.'], 422);
-            }
-            $employee = employee::findOrFail($resignation->employee_id);
-            $employee->update(['is_active' => false]);
-
+        if (
+            loans::where('employee_id', $resignation->employee_id)
+                ->where('status', 'active')
+                ->exists()
+        ) {
+            return response()->json(['message' => 'Employee has active loans. Cannot approve resignation.'], 422);
         }
+        $employee = employee::findOrFail($resignation->employee_id);
+        $employee->update(['is_active' => false]);
+
+
 
 
         return response()->json($resignation);
 
+    }
+
+    public function testFunction($id)
+    {
+        $loanDetails = loans::where('employee_id', $id)->get();
+        // Example function to test route
+        return response()->json($loanDetails);
     }
 
     public function uploadDocuments(Request $request, $id)
