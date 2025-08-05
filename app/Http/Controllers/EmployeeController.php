@@ -225,6 +225,8 @@ class EmployeeController extends Controller
                 'nopayActive' => 'required|boolean',
                 'morningOt' => 'required|boolean',
                 'eveningOt' => 'required|boolean',
+                'ot_morning_rate' => 'required|numeric',
+                'ot_night_rate' => 'required|numeric',
                 'budgetaryReliefAllowance2015' => 'required|boolean',
                 'budgetaryReliefAllowance2016' => 'required|boolean',
             ]);
@@ -438,6 +440,8 @@ class EmployeeController extends Controller
                 'active_nopay' => $compensation['nopayActive'],
                 'ot_morning' => $compensation['morningOt'],
                 'ot_evening' => $compensation['eveningOt'],
+                'ot_morning_rate' => $compensation['ot_morning_rate'],
+                'ot_night_rate' => $compensation['ot_night_rate'],
                 'br1' => $compensation['budgetaryReliefAllowance2015'],
                 'br2' => $compensation['budgetaryReliefAllowance2016'],
             ]);
