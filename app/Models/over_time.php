@@ -14,6 +14,9 @@ class over_time extends Model
         'shift_code',
         'time_cards_id',
         'ot_hours',
+        'morning_ot',
+        'afternoon_ot',
+        'status',
     ];
 
     public function employee()
