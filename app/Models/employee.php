@@ -81,19 +81,32 @@ class employee extends Model
 
     public function allowances()
     {
-        return $this->belongsToMany(Allowances::class, 'employee_allowances')
+        return $this->belongsToMany(Allowances::class, 'employee_allowances', 'employee_id', 'allowance_id')
             ->withPivot('custom_amount');
     }
 
     public function deductions()
     {
-        return $this->belongsToMany(Deduction::class, 'employee_deductions')
+        return $this->belongsToMany(Deduction::class, 'employee_deductions', 'employee_id', 'deduction_id')
             ->withPivot('custom_amount');
     }
 
     public function loans()
     {
         return $this->hasMany(loans::class);
+    }
+
+    public function noPayRecords()
+    {
+        return $this->hasMany(NoPayRecord::class);
+    }
+    public function salaryProcesses()
+    {
+        return $this->hasMany(salary_process::class, 'employee_id');
+    }
+    public function overTimes()
+    {
+        return $this->hasMany(over_time::class);
     }
 
 }

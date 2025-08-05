@@ -51,6 +51,25 @@ class SalaryProcessController extends Controller
         return response()->json($salaryData, 201);
     }
 
+    public function updateSlaryStatus(Request $request)
+    {
+
+        if ($request->has('status') && $request->status == 'processed') {
+            $salaryData = salary_process::where('status', 'pending')->update([
+                'status' => 'processed',
+            ]);
+            return response()->json($salaryData, 200);
+        }
+        if ($request->has('status') && $request->status == 'issued') {
+            $salaryData = salary_process::where('status', 'processed')->update([
+                'status' => 'issued',
+            ]);
+            return response()->json($salaryData, 200);
+        }
+        return response()->json(['message' => 'Invalid status'], 400);
+
+    }
+
     /**
      * Display the specified resource.
      */
@@ -138,162 +157,298 @@ class SalaryProcessController extends Controller
 
     public function getEmployeesByMonthAndCompany(Request $request)
     {
-        $validator = Validator::make($request->all(), [
-            'month' => 'required|integer|between:1,12',
-            'year' => 'required|integer',
-            'company_id' => 'required|exists:companies,id',
-            'department_id' => 'nullable|exists:departments,id'
-        ]);
+        $month = $request->query('month');
+        $year = $request->query('year');
+        $company_id = $request->query('company_id');
+        $department_id = $request->query('department_id');
 
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Validation failed',
-                'errors' => $validator->errors()
-            ], 422);
-        }
+        // Build the date range strings for the query
+        $startDate = "{$year}-{$month}-01";
+        $lastDay = date('t', strtotime($startDate));
+        $endDate = "{$year}-{$month}-{$lastDay}";
 
-        $month = $request->month;
-        $year = $request->year;
-        $startDate = "$year-$month-01";
-        $endDate = date('Y-m-t', strtotime($startDate));
+        // Calculate working days by checking leave_calendars for company holidays
+        $totalDaysInMonth = $lastDay;
 
-        $employees = Employee::select([
-            'employees.id',
-            'employees.attendance_employee_no as emp_no',
-            'employees.full_name',
-            'companies.name as company_name',
-            'departments.name as department_name',
-            'sub_departments.name as sub_department_name',
-            'compensation.basic_salary',
-            'compensation.increment_active',
-            DB::raw("CASE WHEN compensation.increment_active = 1 THEN compensation.increment_value ELSE NULL END AS increment_value"),
-            DB::raw("CASE WHEN compensation.increment_active = 1 THEN compensation.increment_effected_date ELSE NULL END AS increment_effected_date"),
-            'compensation.ot_morning',
-            'compensation.ot_evening',
-            'compensation.enable_epf_etf',
-            DB::raw("CASE
-                WHEN compensation.br1 = 1 AND compensation.br2 = 1 THEN 'Both BR1 and BR2'
-                WHEN compensation.br1 = 1 THEN 'BR1 Only'
-                WHEN compensation.br2 = 1 THEN 'BR2 Only'
-                ELSE 'None'
-            END AS br_status"),
-            DB::raw("COALESCE(SUM(loans.loan_amount), 0) as total_loan_amount"),
-            DB::raw("COALESCE(COUNT(npr.id), 0) as approved_no_pay_days"),
-            DB::raw("CONCAT('[',
-                GROUP_CONCAT(DISTINCT
-                    JSON_OBJECT(
-                        'id', allowances.id,
-                        'allowance_name', allowances.allowance_name,
-                        'amount', COALESCE(ea.custom_amount, allowances.amount),
-                        'is_custom', CASE WHEN ea.id IS NOT NULL THEN 1 ELSE 0 END,
-                        'allowance_code', allowances.allowance_code,
-                        'category', allowances.category
-                    )
-                ),
-            ']') AS allowances"),
-            DB::raw("CONCAT('[',
-                GROUP_CONCAT(DISTINCT
-                    JSON_OBJECT(
-                        'id', deductions.id,
-                        'deduction_name', deductions.deduction_name,
-                        'amount', COALESCE(ed.custom_amount, deductions.amount),
-                        'is_custom', CASE WHEN ed.id IS NOT NULL THEN 1 ELSE 0 END,
-                        'deduction_code', deductions.deduction_code,
-                        'category', deductions.category
-                    )
-                ),
-            ']') AS deductions")
-        ])
-            ->join('organization_assignments as oa', 'employees.organization_assignment_id', '=', 'oa.id')
-            ->join('companies', 'oa.company_id', '=', 'companies.id')
-            ->leftJoin('departments', 'oa.department_id', '=', 'departments.id')
-            ->leftJoin('sub_departments', 'oa.sub_department_id', '=', 'sub_departments.id')
-            ->leftJoin('compensation', 'employees.id', '=', 'compensation.employee_id')
-            ->leftJoin('loans', 'employees.id', '=', 'loans.employee_id')
-            ->leftJoin('no_pay_records as npr', function ($join) use ($startDate, $endDate) {
-                $join->on('employees.id', '=', 'npr.employee_id')
-                    ->where('npr.status', 'Approved')
-                    ->whereBetween('npr.date', [$startDate, $endDate]);
+        // Get company leaves for the specified month and company
+        $companyLeaves = DB::table('leave_calendars')
+            ->where('company_id', $company_id)
+            ->where(function ($query) use ($startDate, $endDate) {
+                $query->where(function ($q) use ($startDate, $endDate) {
+                    $q->where('start_date', '<=', $endDate)
+                        ->where('end_date', '>=', $startDate);
+                })->orWhereBetween('start_date', [$startDate, $endDate]);
             })
-            ->leftJoin('allowances', function ($join) {
-                $join->on('companies.id', '=', 'allowances.company_id')
-                    ->where('allowances.status', 'active')
-                    ->where(function ($query) {
-                        $query->whereNull('allowances.department_id')
-                            ->orWhereColumn('allowances.department_id', '=', 'oa.department_id');
-                    });
-            })
-            ->leftJoin('employee_allowances as ea', function ($join) {
-                $join->on('allowances.id', '=', 'ea.allowance_id')
-                    ->on('employees.id', '=', 'ea.employee_id');
-            })
-            ->leftJoin('deductions', function ($join) {
-                $join->on('companies.id', '=', 'deductions.company_id')
-                    ->where('deductions.status', 'active')
-                    ->where(function ($query) {
-                        $query->whereNull('deductions.department_id')
-                            ->orWhereColumn('deductions.department_id', '=', 'oa.department_id');
-                    });
-            })
-            ->leftJoin('employee_deductions as ed', function ($join) {
-                $join->on('deductions.id', '=', 'ed.deduction_id')
-                    ->on('employees.id', '=', 'ed.employee_id');
-            })
-            ->where('oa.company_id', $request->company_id)
-            ->when($request->filled('department_id'), function ($query) use ($request) {
-                $query->where('oa.department_id', $request->department_id);
-            })
-            ->whereExists(function ($query) use ($startDate, $endDate) {
-                $query->select(DB::raw(1))
-                    ->from('rosters')
-                    ->whereColumn('rosters.employee_id', 'employees.id')
-                    ->where(function ($q) use ($startDate, $endDate) {
-                        $q->where(function ($sub) {
-                            $sub->whereNull('rosters.date_from')
-                                ->whereNull('rosters.date_to');
-                        })
-                            ->orWhere(function ($sub) use ($startDate, $endDate) {
-                                $sub->where('rosters.date_from', '<=', $endDate)
-                                    ->where('rosters.date_to', '>=', $startDate);
-                            })
-                            ->orWhereBetween('rosters.date_from', [$startDate, $endDate])
-                            ->orWhereBetween('rosters.date_to', [$startDate, $endDate]);
-                    });
-            })
-            ->groupBy([
-                'employees.id',
-                'employees.attendance_employee_no',
-                'employees.full_name',
-                'companies.name',
-                'departments.name',
-                'sub_departments.name',
-                'compensation.basic_salary',
-                'compensation.increment_active',
-                'compensation.increment_value',
-                'compensation.increment_effected_date',
-                'compensation.ot_morning',
-                'compensation.ot_evening',
-                'compensation.enable_epf_etf',
-                'compensation.br1',
-                'compensation.br2'
-            ])
+            ->whereNull('deleted_at')
             ->get();
 
-        // Process the JSON strings into actual arrays
-        $employees->transform(function ($employee) {
-            $employee->allowances = json_decode($employee->allowances ?? '[]', true);
-            $employee->deductions = json_decode($employee->deductions ?? '[]', true);
-            return $employee;
-        });
+        // Count leave days that fall within the month
+        $leaveDaysCount = 0;
+        foreach ($companyLeaves as $leave) {
+            $leaveStart = max($startDate, $leave->start_date);
+            $leaveEnd = $leave->end_date ? min($endDate, $leave->end_date) : $leaveStart;
+
+            // Calculate days between start and end dates (inclusive)
+            $leaveDaysCount += date_diff(date_create($leaveStart), date_create($leaveEnd))->days + 1;
+        }
+
+        // Calculate actual working days
+        $workingDaysInMonth = $totalDaysInMonth - $leaveDaysCount;
+
+        // Build the query with all the data consolidated in one SQL statement
+        $query = "
+        SELECT
+            e.id,
+            e.attendance_employee_no AS emp_no,
+            e.full_name,
+            c.name AS company_name,
+            d.name AS department_name,
+            sd.name AS sub_department_name,
+            comp.basic_salary,
+
+            -- Compensation flags
+            comp.increment_active,
+            CASE
+                WHEN comp.increment_active = 1 THEN comp.increment_value
+                ELSE NULL
+            END AS increment_value,
+            CASE
+                WHEN comp.increment_active = 1 THEN comp.increment_effected_date
+                ELSE NULL
+            END AS increment_effected_date,
+            comp.ot_morning,
+            comp.ot_evening,
+            comp.enable_epf_etf,
+            comp.br1,
+            comp.br2,
+
+            -- BR status
+            CASE
+                WHEN comp.br1 = 1 AND comp.br2 = 1 THEN 'Both BR1 and BR2'
+                WHEN comp.br1 = 1 THEN 'BR1 Only'
+                WHEN comp.br2 = 1 THEN 'BR2 Only'
+                ELSE 'None'
+            END AS br_status,
+
+            -- Loans
+            COALESCE(SUM(lo.loan_amount), 0) AS total_loan_amount,
+            lo.installment_count,
+            lo.installment_amount,
+
+            -- No pay records
+            COALESCE(COUNT(npr.id), 0) AS approved_no_pay_days,
+
+            -- Consolidated Allowances (as JSON-like string)
+            (
+                SELECT CONCAT('[',
+                       GROUP_CONCAT(
+                           CONCAT(
+                               '{\"id\":', a.id,
+                               ',\"name\":\"', a.allowance_name,
+                               '\",\"amount\":', COALESCE(ea.custom_amount, a.amount),
+                               ',\"is_custom\":', CASE WHEN ea.id IS NOT NULL THEN 1 ELSE 0 END,
+                               ',\"code\":\"', a.allowance_code,
+                               '\",\"category\":\"', a.category, '\"}'
+                           )
+                       ),
+                       ']')
+                FROM allowances a
+                LEFT JOIN employee_allowances ea ON a.id = ea.allowance_id AND ea.employee_id = e.id
+                WHERE a.company_id = c.id
+                AND (a.department_id IS NULL OR a.department_id = oa.department_id)
+                AND a.status = 'active'
+            ) AS allowances,
+
+            -- Consolidated Deductions (as JSON-like string)
+            (
+                SELECT CONCAT('[',
+                       GROUP_CONCAT(
+                           CONCAT(
+                               '{\"id\":', dd.id,
+                               ',\"name\":\"', dd.deduction_name,
+                               '\",\"amount\":', COALESCE(ed.custom_amount, dd.amount),
+                               ',\"is_custom\":', CASE WHEN ed.id IS NOT NULL THEN 1 ELSE 0 END,
+                               ',\"code\":\"', dd.deduction_code,
+                               '\",\"category\":\"', dd.category, '\"}'
+                           )
+                       ),
+                       ']')
+                FROM deductions dd
+                LEFT JOIN employee_deductions ed ON dd.id = ed.deduction_id AND ed.employee_id = e.id
+                WHERE dd.company_id = c.id
+                AND (dd.department_id IS NULL OR dd.department_id = oa.department_id)
+                AND dd.status = 'active'
+            ) AS deductions
+        FROM
+            employees e
+        JOIN
+            organization_assignments oa ON e.organization_assignment_id = oa.id
+        JOIN
+            companies c ON oa.company_id = c.id
+        LEFT JOIN
+            departments d ON oa.department_id = d.id
+        LEFT JOIN
+            sub_departments sd ON oa.sub_department_id = sd.id
+        LEFT JOIN
+            compensation comp ON e.id = comp.employee_id
+        LEFT JOIN
+            loans lo ON e.id = lo.employee_id AND lo.status = 'active'
+        LEFT JOIN
+            no_pay_records npr ON e.id = npr.employee_id
+            AND npr.status = 'Approved'
+            AND npr.date BETWEEN ? AND ?
+        WHERE
+            oa.company_id = ?
+    ";
+
+        // Add department filter if specified
+        if ($department_id) {
+            $query .= " AND oa.department_id = ?";
+        }
+
+        $query .= "
+    AND EXISTS (
+        SELECT 1 FROM rosters r
+        WHERE r.employee_id = e.id
+        AND (
+            (r.date_from <= ? AND r.date_to >= ?) OR
+            (r.date_from BETWEEN ? AND ?) OR
+            (r.date_to BETWEEN ? AND ?) OR
+            (r.date_from IS NULL AND r.date_to IS NULL)
+        )
+    )
+    GROUP BY
+        e.id, e.attendance_employee_no, e.full_name,
+        c.name, d.name, sd.name,
+        comp.basic_salary, comp.br1, comp.br2,
+        comp.increment_active, comp.increment_value,
+        comp.increment_effected_date, comp.ot_morning,
+        comp.ot_evening, comp.enable_epf_etf,
+        lo.installment_count, lo.installment_amount,
+        c.id, oa.department_id
+";
+
+        // Prepare parameters
+        $params = [$startDate, $endDate, $company_id];
+        if ($department_id) {
+            $params[] = $department_id;
+        }
+        $params = array_merge($params, [$endDate, $startDate, $startDate, $endDate, $startDate, $endDate]);
+
+        // Execute the query
+        $results = DB::select($query, $params);
+
+        // Process results and calculate salaries
+        $data = [];
+        foreach ($results as $result) {
+            // Parse JSON fields
+            $allowances = json_decode($result->allowances ?? '[]', true) ?: [];
+            $deductions = json_decode($result->deductions ?? '[]', true) ?: [];
+
+            // Convert to array
+            $employeeData = (array) $result;
+            $employeeData['allowances'] = $allowances;
+            $employeeData['deductions'] = $deductions;
+
+            // Calculate salary components
+            $basicSalary = (float) $employeeData['basic_salary'];
+
+            // Add BR allowances to basic salary
+            $brAllowance = 0;
+            if ($result->br1 == 1 && $result->br2 == 1) {
+                // Both BR1 and BR2
+                $brAllowance = 3500;
+            } elseif ($result->br1 == 1) {
+                // BR1 Only
+                $brAllowance = 1000;
+            } elseif ($result->br2 == 1) {
+                // BR2 Only
+                $brAllowance = 2500;
+            }
+
+            $basicSalary += $brAllowance;
+
+            $approvedNoPayDays = (int) $employeeData['approved_no_pay_days'];
+            $installmentAmount = (float) ($employeeData['installment_amount'] ?? 0);
+
+            // 1. Handle Increment (if applicable)
+            if (
+                $employeeData['increment_active'] &&
+                $employeeData['increment_effected_date'] &&
+                strtotime($employeeData['increment_effected_date']) <= strtotime($endDate)
+            ) {
+                $incrementPercent = (float) rtrim($employeeData['increment_value'], '%');
+                $basicSalary = $basicSalary * (1 + ($incrementPercent / 100));
+            }
+
+            // 2. Calculate No-Pay Deduction using actual working days
+            $perDaySalary = $basicSalary / $workingDaysInMonth;
+            $noPayDeduction = $approvedNoPayDays * $perDaySalary;
+            $adjustedBasic = $basicSalary - $noPayDeduction;
+
+            // 3. Sum Allowances
+            $totalAllowances = array_reduce($allowances, function ($carry, $item) {
+                return $carry + (float) $item['amount'];
+            }, 0);
+
+            // Calculate EPF/ETF base (basic + allowances - no pay)
+            $epfEtfBase = $adjustedBasic + $totalAllowances;
+
+            // 4. Calculate EPF employee contribution (8%) if enabled
+            $epfEmployeeDeduction = 0;
+            if ($employeeData['enable_epf_etf']) {
+                $epfEmployeeDeduction = $epfEtfBase * 0.08; // 8% EPF deduction
+            }
+
+            // 5. Calculate EPF employer contribution (12%) and ETF (3%) - for display only
+            $epfEmployerContribution = $employeeData['enable_epf_etf'] ? $epfEtfBase * 0.12 : 0;
+            $etfEmployerContribution = $employeeData['enable_epf_etf'] ? $epfEtfBase * 0.03 : 0;
+
+            // 6. Sum Fixed Deductions (excluding loans and EPF)
+            $totalFixedDeductions = array_reduce($deductions, function ($carry, $item) {
+                return $carry + (float) $item['amount'];
+            }, 0);
+
+            // 7. Calculate Gross Salary (basic - no pay + allowances)
+            $grossSalary = $epfEtfBase;
+
+            // 8. Calculate Net Salary (gross - EPF - deductions - loan)
+            $totalDeductions = $totalFixedDeductions + $installmentAmount + $epfEmployeeDeduction;
+            $netSalary = $grossSalary - $totalDeductions;
+
+            // Add calculated fields to response
+            $employeeData['salary_breakdown'] = [
+                'basic_salary' => $basicSalary,
+                'br_allowance' => $brAllowance,
+                'adjusted_basic' => $adjustedBasic,
+                'per_day_salary' => $perDaySalary,
+                'no_pay_deduction' => $noPayDeduction,
+                'total_allowances' => $totalAllowances,
+                'epf_etf_base' => $epfEtfBase,
+                'epf_employee_deduction' => $epfEmployeeDeduction, // 8% EPF deduction from employee
+                'epf_employer_contribution' => $epfEmployerContribution, // 12% EPF contribution from employer
+                'etf_employer_contribution' => $etfEmployerContribution, // 3% ETF contribution from employer
+                'total_fixed_deductions' => $totalFixedDeductions,
+                'loan_installment' => $installmentAmount,
+                'gross_salary' => $grossSalary,
+                'total_deductions' => $totalDeductions,
+                'net_salary' => $netSalary
+            ];
+
+            $data[] = $employeeData;
+        }
 
         return response()->json([
-            'data' => $employees,
+            'data' => $data,
             'meta' => [
                 'month' => $month,
                 'year' => $year,
-                'company_id' => $request->company_id,
-                'department_id' => $request->department_id ?? null,
-                'count' => $employees->count()
+                'company_id' => $company_id,
+                'department_id' => $department_id,
+                'count' => count($data),
+                'total_days_in_month' => $totalDaysInMonth,
+                'company_leave_days' => $leaveDaysCount,
+                'working_days_in_month' => $workingDaysInMonth
             ]
         ]);
     }
@@ -302,7 +457,7 @@ class SalaryProcessController extends Controller
     {
         $employeeIDs = $request->selectedEmployees; // This is an array of IDs
         $type = $request->bulkActionType;
-        $amount = $request->bulkActionAmount || null; // Changed from 'amount' to match JSON
+        $amount = $request->bulkActionAmount; // Changed from 'amount' to match JSON
 
         if (!is_array($employeeIDs) || empty($employeeIDs)) {
             return response()->json(['error' => 'No employees selected'], 400);
@@ -347,5 +502,107 @@ class SalaryProcessController extends Controller
         ], 200);
     }
 
+    public function storeSalaryData(Request $request)
+    {
+        $validated = $request->validate([
+            'data' => 'required|array',
+            'data.*.emp_no' => 'required|integer',
+            'data.*.full_name' => 'required|string',
+            // Add other validation rules as needed
+        ]);
 
+        try {
+            foreach ($request->data as $employeeData) {
+                salary_process::create([
+                    'employee_id' => $employeeData['id'],
+                    'employee_no' => $employeeData['emp_no'],
+                    'full_name' => $employeeData['full_name'],
+                    'company_name' => $employeeData['company_name'],
+                    'department_name' => $employeeData['department_name'],
+                    'sub_department_name' => $employeeData['sub_department_name'] ?? null,
+                    'basic_salary' => $employeeData['basic_salary'],
+                    'increment_active' => $employeeData['increment_active'] ?? false,
+                    'increment_value' => $employeeData['increment_value'] ?? null,
+                    'increment_effected_date' => $employeeData['increment_effected_date'] ?? null,
+                    'ot_morning' => $employeeData['ot_morning'] ?? false,
+                    'ot_evening' => $employeeData['ot_evening'] ?? false,
+                    'enable_epf_etf' => $employeeData['enable_epf_etf'] ?? false,
+                    'br1' => $employeeData['br1'] ?? false,
+                    'br2' => $employeeData['br2'] ?? false,
+                    'br_status' => $employeeData['br_status'] ?? '',
+                    'total_loan_amount' => $employeeData['total_loan_amount'] ?? 0,
+                    'installment_count' => $employeeData['installment_count'] ?? null,
+                    'installment_amount' => $employeeData['installment_amount'] ?? null,
+                    'approved_no_pay_days' => $employeeData['approved_no_pay_days'] ?? 0,
+                    'allowances' => $employeeData['allowances'] ?? null,
+                    'deductions' => $employeeData['deductions'] ?? null,
+                    'salary_breakdown' => $employeeData['salary_breakdown'] ?? null,
+                    'month' => $request->month ?? date('m'),
+                    'year' => $request->year ?? date('Y'),
+                ]);
+            }
+
+            return response()->json(['message' => 'Salary data saved successfully'], 201);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Error saving salary data: ' . $e->getMessage()], 500);
+        }
+    }
+    public function getProcessedSalaries()
+    {
+        $processedSalaries = salary_process::where('status', 'processed')
+            ->with([
+                'employee' => function ($query) {
+                    $query->select('id', 'full_name', 'attendance_employee_no')
+                        ->with([
+                            'compensation' => function ($q) {
+                                $q->select('employee_id', 'basic_salary', 'enable_epf_etf');
+                            }
+                        ])
+                        ->with([
+                            'compensation' => function ($q) {
+                                $q->select('employee_id', 'bank_name', 'bank_account_no', 'branch_name');
+                            }
+                        ]);
+                }
+            ])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Format the response
+        $response = $processedSalaries->map(function ($salary) {
+            return [
+                'id' => $salary->id,
+                'employee_id' => $salary->employee_id,
+                'employee_no' => $salary->employee_no,
+                'full_name' => $salary->full_name,
+                'company_name' => $salary->company_name,
+                'department_name' => $salary->department_name,
+                'basic_salary' => $salary->basic_salary,
+                'month' => $salary->month,
+                'year' => $salary->year,
+                'status' => $salary->status,
+                'compensation' => $salary->employee->compensation ?? null,
+                'bank_details' => $salary->employee->bankDetails ?? null,
+                'salary_breakdown' => $salary->salary_breakdown,
+                'allowances' => $salary->allowances,
+                'deductions' => $salary->deductions
+            ];
+        });
+
+        return response()->json($response);
+    }
+
+    public function markAsIssued(Request $request)
+    {
+        $validated = $request->validate([
+            'employee_ids' => 'required|array',
+            'employee_ids.*' => 'exists:salary_processes,employee_id'
+        ]);
+
+        salary_process::whereIn('employee_id', $validated['employee_ids'])
+            ->where('status', 'processed')
+            ->update(['status' => 'issued']);
+
+        return response()->json(['message' => 'Payslips marked as issued successfully']);
+    }
 }

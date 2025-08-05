@@ -68,7 +68,7 @@ class time_card extends Model
                     }
                 } elseif ($status === 'Absent') {
                     // Save to absences table
-                    absences::create([
+                    absence::create([
                         'employee_id' => $employee->id,
                         'date' => $date,
                         'reason' => 'Imported from Excel',

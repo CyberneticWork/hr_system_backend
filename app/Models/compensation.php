@@ -36,4 +36,9 @@ class compensation extends Model
     {
         return $this->belongsTo(employee::class);
     }
+
+    public function salaryProcesses()
+    {
+        return $this->hasMany(salary_process::class, 'employee_id');
+    }
 }

@@ -11,49 +11,55 @@ class salary_process extends Model
 
     protected $fillable = [
         'employee_id',
-        'process_date',
-        'basic',
+        'employee_no',
+        'full_name',
+        'company_name',
+        'department_name',
+        'sub_department_name',
         'basic_salary',
-        'no_pay_records_id',
-        'over_times_id',
-        'allowances_id',
-        'loans_id',
-        'deductions_id',
-        'gross_amount',
-        'salary_advance',
-        'net_salary',
-        'status',
-        'processed_by'
+        'increment_active',
+        'increment_value',
+        'increment_effected_date',
+        'ot_morning',
+        'ot_evening',
+        'enable_epf_etf',
+        'br1',
+        'br2',
+        'br_status',
+        'total_loan_amount',
+        'installment_count',
+        'installment_amount',
+        'approved_no_pay_days',
+        'allowances',
+        'deductions',
+        'salary_breakdown',
+        'month',
+        'year',
+        'status'
     ];
 
+    protected $casts = [
+        'increment_active' => 'boolean',
+        'ot_morning' => 'boolean',
+        'ot_evening' => 'boolean',
+        'enable_epf_etf' => 'boolean',
+        'br1' => 'boolean',
+        'br2' => 'boolean',
+        'basic_salary' => 'decimal:2',
+        'total_loan_amount' => 'decimal:2',
+        'installment_amount' => 'decimal:2',
+        'allowances' => 'json',
+        'deductions' => 'json',
+        'salary_breakdown' => 'json',
+        'increment_effected_date' => 'date',
+    ];
     public function employee()
     {
-        return $this->belongsTo(employee::class);
+        return $this->belongsTo(employee::class, 'employee_id');
     }
-
-    public function noPayRecord()
+    public function compensation()
     {
-        return $this->belongsTo(NoPayRecord::class, 'no_pay_records_id');
-    }
-
-    public function overTime()
-    {
-        return $this->belongsTo(over_time::class, 'over_times_id');
-    }
-
-    public function allowance()
-    {
-        return $this->belongsTo(allowances::class, 'allowances_id');
-    }
-
-    public function loan()
-    {
-        return $this->belongsTo(loans::class, 'loans_id');
-    }
-
-    public function deduction()
-    {
-        return $this->belongsTo(deduction::class, 'deductions_id');
+        return $this->belongsTo(compensation::class, 'employee_id');
     }
 
 

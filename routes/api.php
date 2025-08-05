@@ -5,8 +5,10 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\LoanController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\NoPayController;
 use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\RosterController;
+use App\Http\Controllers\SalaryController;
 use App\Http\Controllers\ApiDataController;
 use App\Http\Controllers\CompanyController;
 use App\Http\Controllers\EmployeeController;
@@ -15,12 +17,11 @@ use App\Http\Controllers\TimeCardController;
 use App\Http\Controllers\DeductionController;
 use App\Http\Controllers\AllowancesController;
 use App\Http\Controllers\DepartmentsController;
+use App\Http\Controllers\LeaveMasterController;
 use App\Http\Controllers\ResignationController;
 use App\Http\Controllers\LeaveCalenderController;
-use App\Http\Controllers\SubDepartmentsController;
-use App\Http\Controllers\LeaveMasterController;
-use App\Http\Controllers\NoPayController;
 use App\Http\Controllers\SalaryProcessController;
+use App\Http\Controllers\SubDepartmentsController;
 
 Route::get('/user', function (Request $request) {
     return $request->user();
@@ -48,6 +49,7 @@ Route::get('/emp/search', [EmployeeController::class, 'search']);
 Route::apiResource('loans', LoanController::class);
 Route::apiResource('allowances', AllowancesController::class);
 Route::get('/allowance/by-company-or-department', [AllowancesController::class, 'getAllowancesByCompanyOrDepartment']);
+Route::get('/deduction/by-company-or-department', [DeductionController::class, 'getDeductionsByCompanyOrDepartment']);
 
 Route::apiResource('deductions', DeductionController::class);
 Route::apiResource('leave-calendars', LeaveCalenderController::class);
@@ -58,6 +60,12 @@ Route::apiResource('rosters', RosterController::class);
 Route::apiResource('overtime', OvertimeController::class);
 Route::apiResource('leave-masters', LeaveMasterController::class);
 Route::apiResource('salary-process', SalaryProcessController::class);
+Route::get('salary/processed', [SalaryProcessController::class, 'getProcessedSalaries']);
+Route::post('/salary/process/mark-issued', [SalaryProcessController::class, 'markAsIssued']);
+Route::get('/salary/update/status', [SalaryProcessController::class, 'updateSlaryStatus']);
+Route::apiResource('salary', SalaryController::class);
+
+
 Route::get('/Leave-Master/{employeeId}/counts', [LeaveMasterController::class, 'getLeaveRecordCountsByEmployee']);
 
 Route::get('/Leave-Master/status/pending', [LeaveMasterController::class, 'getPendingLeaveRecords']);
@@ -104,8 +112,9 @@ Route::get('/attendance/absentees', [TimeCardController::class, 'fetchAbsentees'
 Route::get('/attendance-template', [TimeCardController::class, 'downloadTemplate']);
 
 //get employees by month and company
-Route::get('/salary/process/employees-by-month', [SalaryProcessController::class, 'getEmployeesByMonthAndCompany']);
+Route::get('/salaryCal/employees', [SalaryProcessController::class, 'getEmployeesByMonthAndCompany']);
 Route::post('/salary/process/allowances', [SalaryProcessController::class, 'updateEmployeesAllowances']);
+Route::post('/salary/process/save', [SalaryProcessController::class, 'storeSalaryData']);
 
 Route::post('/attendance/mark-absentees', [TimeCardController::class, 'markAbsentees']);
 Route::get('/absentees', [ApiDataController::class, 'Absentees']);
