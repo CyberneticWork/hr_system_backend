@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\employee;
 use App\Models\employee_allowances;
 use App\Models\employee_deductions;
+use App\Models\over_time;
 use Illuminate\Http\Request;
 use App\Models\salary_process;
 use Illuminate\Support\Facades\DB;
@@ -221,6 +222,8 @@ class SalaryProcessController extends Controller
             comp.enable_epf_etf,
             comp.br1,
             comp.br2,
+            comp.ot_morning_rate,
+            comp.ot_night_rate,
 
             -- BR status
             CASE
@@ -323,7 +326,8 @@ class SalaryProcessController extends Controller
         comp.basic_salary, comp.br1, comp.br2,
         comp.increment_active, comp.increment_value,
         comp.increment_effected_date, comp.ot_morning,
-        comp.ot_evening, comp.enable_epf_etf,
+        comp.ot_evening, comp.ot_morning_rate,
+        comp.ot_night_rate,  comp.enable_epf_etf,
         lo.installment_count, lo.installment_amount,
         c.id, oa.department_id
 ";
@@ -409,17 +413,41 @@ class SalaryProcessController extends Controller
                 return $carry + (float) $item['amount'];
             }, 0);
 
+            $morning_ot_fees = 0;
+            if ($employeeData['ot_morning'] == 1) {
+                $empid = $employeeData['id'];
+                $morning_ot_time = over_time::where('employee_id', $empid)
+                    ->where('status', 'approved')
+                    ->value('morning_ot');
+                $morning_ot_fees = $morning_ot_time * $employeeData['ot_morning_rate'];
+            }
+
+            $night_ot_fees = 0;
+            if ($employeeData['ot_evening'] == 1) {
+                $empid = $employeeData['id'];
+                $night_ot_time = over_time::where('employee_id', $empid)
+                    ->where('status', 'approved')
+                    ->value('afternoon_ot');
+                $night_ot_fees = $night_ot_time * $employeeData['ot_night_rate'];
+            }
+
+
             // 7. Calculate Gross Salary (basic - no pay + allowances)
-            $grossSalary = $epfEtfBase;
+            $grossSalary = $epfEtfBase + $morning_ot_fees + $night_ot_fees;
 
             // 8. Calculate Net Salary (gross - EPF - deductions - loan)
             $totalDeductions = $totalFixedDeductions + $installmentAmount + $epfEmployeeDeduction;
             $netSalary = $grossSalary - $totalDeductions;
 
+
+
             // Add calculated fields to response
             $employeeData['salary_breakdown'] = [
                 'basic_salary' => $basicSalary,
                 'br_allowance' => $brAllowance,
+                'ot_morning_fees' => $morning_ot_fees,
+                'ot_night_fees' => $night_ot_fees,
+
                 'adjusted_basic' => $adjustedBasic,
                 'per_day_salary' => $perDaySalary,
                 'no_pay_deduction' => $noPayDeduction,
