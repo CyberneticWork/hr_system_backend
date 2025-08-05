@@ -29,6 +29,8 @@ class compensation extends Model
         'active_nopay',
         'ot_morning',
         'ot_evening',
+        'ot_morning_rate',
+        'ot_night_rate',
         'br1',
         'br2'
     ];
