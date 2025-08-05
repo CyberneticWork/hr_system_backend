@@ -536,11 +536,28 @@ class SalaryProcessController extends Controller
             'data' => 'required|array',
             'data.*.emp_no' => 'required|integer',
             'data.*.full_name' => 'required|string',
+            'month' => 'sometimes|integer|between:1,12',
+            'year' => 'sometimes|integer',
             // Add other validation rules as needed
         ]);
 
         try {
+            $month = $request->month ?? date('m');
+            $year = $request->year ?? date('Y');
+            $duplicateEntries = [];
+
             foreach ($request->data as $employeeData) {
+                // Check if record already exists for this employee in this month/year
+                $existingRecord = salary_process::where('employee_no', $employeeData['emp_no'])
+                    ->where('month', $month)
+                    ->where('year', $year)
+                    ->first();
+
+                if ($existingRecord) {
+                    $duplicateEntries[] = $employeeData['emp_no'];
+                    continue; // Skip this record
+                }
+
                 salary_process::create([
                     'employee_id' => $employeeData['id'],
                     'employee_no' => $employeeData['emp_no'],
@@ -565,12 +582,22 @@ class SalaryProcessController extends Controller
                     'allowances' => $employeeData['allowances'] ?? null,
                     'deductions' => $employeeData['deductions'] ?? null,
                     'salary_breakdown' => $employeeData['salary_breakdown'] ?? null,
-                    'month' => $request->month ?? date('m'),
-                    'year' => $request->year ?? date('Y'),
+                    'month' => $month,
+                    'year' => $year,
                 ]);
             }
 
-            return response()->json(['message' => 'Salary data saved successfully'], 201);
+            $response = ['message' => 'Salary data saved successfully'];
+
+            if (!empty($duplicateEntries)) {
+                $response['duplicates'] = [
+                    'message' => 'Some entries were skipped as duplicates',
+                    'employee_numbers' => $duplicateEntries,
+                    'count' => count($duplicateEntries)
+                ];
+            }
+
+            return response()->json($response, 201);
         } catch (\Exception $e) {
             return response()->json(['message' => 'Error saving salary data: ' . $e->getMessage()], 500);
         }
