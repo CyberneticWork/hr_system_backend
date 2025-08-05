@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
-class NoPayController extends Controller
+class NopayController extends Controller
 {
     public function index(Request $request)
     {
