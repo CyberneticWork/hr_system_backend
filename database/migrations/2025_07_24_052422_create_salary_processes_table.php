@@ -23,8 +23,8 @@ return new class extends Migration {
             $table->boolean('increment_active')->default(false);
             $table->string('increment_value')->nullable();
             $table->date('increment_effected_date')->nullable();
-            $table->boolean('ot_morning')->default(false);
-            $table->boolean('ot_evening')->default(false);
+            $table->decimal('ot_morning', 10, 2)->nullable()->default(0);
+            $table->decimal('ot_evening', 10, 2)->nullable()->default(0);
             $table->boolean('enable_epf_etf')->default(false);
             $table->boolean('br1')->default(false);
             $table->boolean('br2')->default(false);
