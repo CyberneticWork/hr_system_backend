@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\LoanController;
 use App\Http\Controllers\UserController;
-use App\Http\Controllers\NoPayController;
+use App\Http\Controllers\NopayController;
 use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\RosterController;
 use App\Http\Controllers\SalaryController;
@@ -119,14 +119,14 @@ Route::post('/salary/process/save', [SalaryProcessController::class, 'storeSalar
 Route::post('/attendance/mark-absentees', [TimeCardController::class, 'markAbsentees']);
 Route::get('/absentees', [ApiDataController::class, 'Absentees']);
 // No Pay routes
-Route::get('no-pay-records', [NoPayController::class, 'index']);
-Route::post('no-pay-records', [NoPayController::class, 'store']);
-Route::put('no-pay-records/{id}', [NoPayController::class, 'update']);
-Route::post('no-pay-records/bulk-update', [NoPayController::class, 'bulkUpdateStatus']);
-Route::delete('no-pay-records/{id}', [NoPayController::class, 'destroy']);
-Route::delete('no-pay-records/bulk-delete', [NoPayController::class, 'bulkDestroy']);
-Route::post('no-pay-records/generate', [NoPayController::class, 'generateDailyNoPayRecords']);
-Route::get('no-pay-records/stats', [NoPayController::class, 'getNoPayStats']);
+Route::get('no-pay-records', [NopayController::class, 'index']);
+Route::post('no-pay-records', [NopayController::class, 'store']);
+Route::put('no-pay-records/{id}', [NopayController::class, 'update']);
+Route::post('no-pay-records/bulk-update', [NopayController::class, 'bulkUpdateStatus']);
+Route::delete('no-pay-records/{id}', [NopayController::class, 'destroy']);
+Route::delete('no-pay-records/bulk-delete', [NopayController::class, 'bulkDestroy']);
+Route::post('no-pay-records/generate', [NopayController::class, 'generateDailyNoPayRecords']);
+Route::get('no-pay-records/stats', [NopayController::class, 'getNoPayStats']);
 
 // Allowances import/export routes
 Route::get('/allowances/template/download', [AllowancesController::class, 'downloadTemplate']);
