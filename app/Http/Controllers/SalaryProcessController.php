@@ -633,6 +633,8 @@ class SalaryProcessController extends Controller
                 'company_name' => $salary->company_name,
                 'department_name' => $salary->department_name,
                 'basic_salary' => $salary->basic_salary,
+                'ot_morning' => $salary->ot_morning,
+                'ot_evening' => $salary->ot_evening,
                 'month' => $salary->month,
                 'year' => $salary->year,
                 'status' => $salary->status,
