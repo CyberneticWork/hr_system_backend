@@ -58,6 +58,7 @@ Route::apiResource('departments', DepartmentsController::class)->only(['store', 
 Route::apiResource('subdepartments', SubDepartmentsController::class);
 Route::apiResource('rosters', RosterController::class);
 Route::apiResource('overtime', OvertimeController::class);
+Route::post('/overtime/approve/{id}', [OvertimeController::class, 'approve']);
 Route::apiResource('leave-masters', LeaveMasterController::class);
 Route::apiResource('salary-process', SalaryProcessController::class);
 Route::get('salary/processed', [SalaryProcessController::class, 'getProcessedSalaries']);

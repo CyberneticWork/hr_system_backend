@@ -22,10 +22,27 @@ class OvertimeController extends Controller
                     'shift_code' => $overtime->shift ?? null,
                     'time_card_id' => $overtime->timeCard ?? null,
                     'ot_hours' => $overtime->ot_hours,
+                    'morning_ot' => $overtime->morning_ot,
+                    'evening_ot' => $overtime->afternoon_ot,
+                    'status' => $overtime->status,
                     'created_at' => $overtime->created_at,
                 ];
             });
         return response()->json($overtimes);
+    }
+
+    public function approve(Request $request, $id)
+    {
+        $overtime = over_time::findOrFail($id);
+        if ($request->status == 'approved') {
+            $overtime->status = 'approved';
+        } else if ($request->status == 'rejected') {
+            $overtime->status = 'rejected';
+        } else {
+            return response()->json(['message' => 'Invalid status'], 400);
+        }
+        $overtime->save();
+        return response()->json(['message' => 'Overtime approved successfully']);
     }
 
     /**
