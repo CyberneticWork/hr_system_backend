@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\employee;
 use App\Models\employee_allowances;
 use App\Models\employee_deductions;
+use App\Models\over_time;
 use Illuminate\Http\Request;
 use App\Models\salary_process;
 use Illuminate\Support\Facades\DB;
@@ -221,6 +222,8 @@ class SalaryProcessController extends Controller
             comp.enable_epf_etf,
             comp.br1,
             comp.br2,
+            comp.ot_morning_rate,
+            comp.ot_night_rate,
 
             -- BR status
             CASE
@@ -323,7 +326,8 @@ class SalaryProcessController extends Controller
         comp.basic_salary, comp.br1, comp.br2,
         comp.increment_active, comp.increment_value,
         comp.increment_effected_date, comp.ot_morning,
-        comp.ot_evening, comp.enable_epf_etf,
+        comp.ot_evening, comp.ot_morning_rate,
+        comp.ot_night_rate,  comp.enable_epf_etf,
         lo.installment_count, lo.installment_amount,
         c.id, oa.department_id
 ";
@@ -409,17 +413,41 @@ class SalaryProcessController extends Controller
                 return $carry + (float) $item['amount'];
             }, 0);
 
+            $morning_ot_fees = 0;
+            if ($employeeData['ot_morning'] == 1) {
+                $empid = $employeeData['id'];
+                $morning_ot_time = over_time::where('employee_id', $empid)
+                    ->where('status', 'approved')
+                    ->value('morning_ot');
+                $morning_ot_fees = $morning_ot_time * $employeeData['ot_morning_rate'];
+            }
+
+            $night_ot_fees = 0;
+            if ($employeeData['ot_evening'] == 1) {
+                $empid = $employeeData['id'];
+                $night_ot_time = over_time::where('employee_id', $empid)
+                    ->where('status', 'approved')
+                    ->value('afternoon_ot');
+                $night_ot_fees = $night_ot_time * $employeeData['ot_night_rate'];
+            }
+
+
             // 7. Calculate Gross Salary (basic - no pay + allowances)
-            $grossSalary = $epfEtfBase;
+            $grossSalary = $epfEtfBase + $morning_ot_fees + $night_ot_fees;
 
             // 8. Calculate Net Salary (gross - EPF - deductions - loan)
             $totalDeductions = $totalFixedDeductions + $installmentAmount + $epfEmployeeDeduction;
             $netSalary = $grossSalary - $totalDeductions;
 
+
+
             // Add calculated fields to response
             $employeeData['salary_breakdown'] = [
                 'basic_salary' => $basicSalary,
                 'br_allowance' => $brAllowance,
+                'ot_morning_fees' => $morning_ot_fees,
+                'ot_night_fees' => $night_ot_fees,
+
                 'adjusted_basic' => $adjustedBasic,
                 'per_day_salary' => $perDaySalary,
                 'no_pay_deduction' => $noPayDeduction,
@@ -508,11 +536,28 @@ class SalaryProcessController extends Controller
             'data' => 'required|array',
             'data.*.emp_no' => 'required|integer',
             'data.*.full_name' => 'required|string',
+            'month' => 'sometimes|integer|between:1,12',
+            'year' => 'sometimes|integer',
             // Add other validation rules as needed
         ]);
 
         try {
+            $month = $request->month ?? date('m');
+            $year = $request->year ?? date('Y');
+            $duplicateEntries = [];
+
             foreach ($request->data as $employeeData) {
+                // Check if record already exists for this employee in this month/year
+                $existingRecord = salary_process::where('employee_no', $employeeData['emp_no'])
+                    ->where('month', $month)
+                    ->where('year', $year)
+                    ->first();
+
+                if ($existingRecord) {
+                    $duplicateEntries[] = $employeeData['emp_no'];
+                    continue; // Skip this record
+                }
+
                 salary_process::create([
                     'employee_id' => $employeeData['id'],
                     'employee_no' => $employeeData['emp_no'],
@@ -524,8 +569,8 @@ class SalaryProcessController extends Controller
                     'increment_active' => $employeeData['increment_active'] ?? false,
                     'increment_value' => $employeeData['increment_value'] ?? null,
                     'increment_effected_date' => $employeeData['increment_effected_date'] ?? null,
-                    'ot_morning' => $employeeData['ot_morning'] ?? false,
-                    'ot_evening' => $employeeData['ot_evening'] ?? false,
+                    'ot_morning' => $employeeData['salary_breakdown']['ot_morning_fees'] ?? false,
+                    'ot_evening' => $employeeData['salary_breakdown']['ot_night_fees'] ?? false,
                     'enable_epf_etf' => $employeeData['enable_epf_etf'] ?? false,
                     'br1' => $employeeData['br1'] ?? false,
                     'br2' => $employeeData['br2'] ?? false,
@@ -537,12 +582,22 @@ class SalaryProcessController extends Controller
                     'allowances' => $employeeData['allowances'] ?? null,
                     'deductions' => $employeeData['deductions'] ?? null,
                     'salary_breakdown' => $employeeData['salary_breakdown'] ?? null,
-                    'month' => $request->month ?? date('m'),
-                    'year' => $request->year ?? date('Y'),
+                    'month' => $month,
+                    'year' => $year,
                 ]);
             }
 
-            return response()->json(['message' => 'Salary data saved successfully'], 201);
+            $response = ['message' => 'Salary data saved successfully'];
+
+            if (!empty($duplicateEntries)) {
+                $response['duplicates'] = [
+                    'message' => 'Some entries were skipped as duplicates',
+                    'employee_numbers' => $duplicateEntries,
+                    'count' => count($duplicateEntries)
+                ];
+            }
+
+            return response()->json($response, 201);
         } catch (\Exception $e) {
             return response()->json(['message' => 'Error saving salary data: ' . $e->getMessage()], 500);
         }

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\loans;
+use App\Models\over_time;
 use App\Models\Resignation;
 use App\Models\ResignationDocument;
 use App\Models\employee;
@@ -121,9 +122,10 @@ class ResignationController extends Controller
 
     public function testFunction($id)
     {
-        $loanDetails = loans::where('employee_id', $id)->get();
-        // Example function to test route
-        return response()->json($loanDetails);
+        $ot = over_time::where('employee_id', $id)
+            ->where('status', 'approved')
+            ->get('afternoon_ot');
+        return $ot;
     }
 
     public function uploadDocuments(Request $request, $id)
