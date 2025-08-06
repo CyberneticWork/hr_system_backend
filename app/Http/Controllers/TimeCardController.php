@@ -28,7 +28,7 @@ class TimeCardController extends Controller
                     'id' => $card->id, // <-- Add this line
                     'empNo' => $card->employee->attendance_employee_no ?? null,
                     'name' => $card->employee->full_name ?? null,
-                    'fingerprintClock' => $card->fingerprint_clock ?? null, // Update if you have this field
+                    'fingerprintClock' => $card->fingerprint_clock?? null, // Update if you have this field
                     'time' => $card->time,
                     'date' => $card->date,
                     'entry' => $card->entry,
@@ -138,7 +138,7 @@ class TimeCardController extends Controller
         $storeTime = $inputTime->format('H:i:s');
         $shiftEnd = Carbon::parse($shift->end_time);
 
-        $entryType = (int) $validated['entry'];
+        $entryType = (int)$validated['entry'];
         $status = strtoupper($validated['status']);
         $working_hours = null;
         $actual_date = null;
@@ -212,49 +212,132 @@ class TimeCardController extends Controller
         ]);
 
         if ($status == "OUT") {
-            $shift_code = $employee->rosters[0]->shift_code ?? null;
+            // Get the appropriate shift code - make sure we get the correct one
+            $shift_code = null;
+            
+            // First try to get shift from the roster for this specific date
+            if ($actual_date) {
+                $dateToCheck = $actual_date;
+            } else {
+                $dateToCheck = $validated['date'];
+            }
+            
+            // Get roster for the relevant date
+            $employeeRoster = roster::where('employee_id', $employee->id)
+                ->whereNull('deleted_at')
+                ->where(function ($q) use ($dateToCheck) {
+                    $q->whereNull('date_from')->orWhere('date_from', '<=', $dateToCheck);
+                })
+                ->where(function ($q) use ($dateToCheck) {
+                    $q->whereNull('date_to')->orWhere('date_to', '>=', $dateToCheck);
+                })
+                ->first();
+            
+            if ($employeeRoster) {
+                $shift_code = $employeeRoster->shift_code;
+            } else {
+                // Fallback to first roster if specific date roster not found
+                $shift_code = $employee->rosters()->first()->shift_code ?? null;
+            }
+            
             $shift = shifts::find($shift_code);
-
-            if ($shift) {
-                $shift_start = Carbon::parse($shift->start_time);
-                $shift_end = Carbon::parse($shift->end_time);
-                $shift_duration = $shift_start->diffInHours($shift_end);
-
-                // Get the IN time for this OUT record
-                $lastInCard = time_card::where('employee_id', $employee->id)
+            
+            // Determine if this is a cross-day scenario
+            if ($actual_date) {
+                // Cross-day scenario - get the last IN record to calculate OT properly
+                $lastInRecord = time_card::where('employee_id', $employee->id)
+                    ->where('date', $actual_date)
                     ->where('status', 'IN')
-                    ->where('date', $validated['date'])
+                    ->orderBy('time', 'desc')
                     ->first();
-
-                if ($lastInCard) {
-                    $actual_in_time = Carbon::parse($lastInCard->time);
-                    $actual_out_time = Carbon::parse($storeTime);
-
-                    // Calculate morning OT (if employee came before shift start)
-                    $morning_ot = 0;
-                    if ($actual_in_time->lt($shift_start)) {
-                        $morning_ot = round($actual_in_time->floatDiffInHours($shift_start), 2);
+                
+                $morning_ot = 0;
+                $afternoon_ot = 0;
+                $ot_time = 0;
+                
+                if ($lastInRecord && $shift) {
+                    // Calculate morning OT if employee clocked in before shift start time
+                    $inTimeOnly = Carbon::parse($lastInRecord->time)->format('H:i:s');
+                    $inDateTime = Carbon::parse($actual_date . ' ' . $inTimeOnly);
+                    $shiftStartTime = Carbon::parse($shift->start_time)->format('H:i:s');
+                    $shiftStartDateTime = Carbon::parse($actual_date . ' ' . $shiftStartTime);
+                    
+                    if ($inDateTime->lt($shiftStartDateTime)) {
+                        // Use abs() to ensure positive OT hours
+                        $morning_ot = abs(round($inDateTime->floatDiffInHours($shiftStartDateTime), 2));
                     }
-
-                    // Calculate afternoon OT (if employee stayed after shift end)
-                    $afternoon_ot = 0;
-                    if ($actual_out_time->gt($shift_end)) {
-                        $afternoon_ot = round($shift_end->floatDiffInHours($actual_out_time), 2);
+                    
+                    // Calculate afternoon OT (from shift end time till actual checkout)
+                    $shiftTimeOnly = Carbon::parse($shift->end_time)->format('H:i:s');
+                    $shiftEndDateTime = Carbon::parse($actual_date . ' ' . $shiftTimeOnly);
+                    $checkoutDateTime = Carbon::parse($validated['date'] . ' ' . $validated['time']);
+                    
+                    // Ensure we're getting a positive value for afternoon OT
+                    if ($checkoutDateTime->gt($shiftEndDateTime)) {
+                        $afternoon_ot = abs(round($checkoutDateTime->floatDiffInHours($shiftEndDateTime), 2));
                     }
-
-                    // Calculate regular OT (total overtime for the day)
-                    $ot_time = ($working_hours - $shift_duration) - 1;
-                    $ot_time = max(0, $ot_time); // Ensure OT is not negative
-
-                    $over_time = over_time::create([
-                        'employee_id' => $validated['employee_id'],
-                        'shift_code' => $shift_code,
-                        'time_cards_id' => $timeCard->id,
-                        'ot_hours' => $ot_time,
-                        'morning_ot' => $morning_ot,
-                        'afternoon_ot' => $afternoon_ot
-                    ]);
+                    
+                    // Calculate total OT as sum of morning and afternoon OT
+                    $ot_time = $morning_ot + $afternoon_ot;
                 }
+                
+                $over_time = over_time::create([
+                    'employee_id' => $validated['employee_id'],
+                    'shift_code' => $shift_code,
+                    'time_cards_id' => $timeCard->id,
+                    'ot_hours' => $ot_time,
+                    'morning_ot' => $morning_ot,
+                    'afternoon_ot' => $afternoon_ot,
+                    'status' => 'pending'
+                ]);
+            } else {
+                // Same day scenario - regular OT calculation
+                // Find the last IN record for this employee on the same day
+                $lastInRecord = time_card::where('employee_id', $employee->id)
+                    ->where('date', $validated['date'])
+                    ->where('status', 'IN')
+                    ->orderBy('time', 'desc')
+                    ->first();
+                
+                $morning_ot = 0;
+                $afternoon_ot = 0;
+                $ot_time = 0;
+                
+                if ($lastInRecord && $shift) {
+                    // Calculate morning OT if employee clocked in before shift start time
+                    $inTimeOnly = Carbon::parse($lastInRecord->time)->format('H:i:s');
+                    $inDateTime = Carbon::parse($validated['date'] . ' ' . $inTimeOnly);
+                    $shiftStartTime = Carbon::parse($shift->start_time)->format('H:i:s');
+                    $shiftStartDateTime = Carbon::parse($validated['date'] . ' ' . $shiftStartTime);
+                    
+                    if ($inDateTime->lt($shiftStartDateTime)) {
+                        // Use abs() to ensure positive OT hours
+                        $morning_ot = abs(round($inDateTime->floatDiffInHours($shiftStartDateTime), 2));
+                    }
+                    
+                    // Calculate afternoon OT
+                    $shiftTimeOnly = Carbon::parse($shift->end_time)->format('H:i:s');
+                    $shiftEndDateTime = Carbon::parse($validated['date'] . ' ' . $shiftTimeOnly);
+                    $checkoutDateTime = Carbon::parse($validated['date'] . ' ' . $validated['time']);
+                    
+                    // Ensure we're getting a positive value for afternoon OT
+                    if ($checkoutDateTime->gt($shiftEndDateTime)) {
+                        $afternoon_ot = abs(round($checkoutDateTime->floatDiffInHours($shiftEndDateTime), 2));
+                    }
+                    
+                    // Calculate total OT as sum of morning and afternoon OT
+                    $ot_time = $morning_ot + $afternoon_ot;
+                }
+                
+                $over_time = over_time::create([
+                    'employee_id' => $validated['employee_id'],
+                    'shift_code' => $shift_code,
+                    'time_cards_id' => $timeCard->id,
+                    'ot_hours' => $ot_time,
+                    'morning_ot' => $morning_ot,
+                    'afternoon_ot' => $afternoon_ot,
+                    'status' => 'pending'
+                ]);
             }
         }
 
@@ -601,7 +684,7 @@ class TimeCardController extends Controller
     //     ]);
     // }
 
-    //     public function update(Request $request, $id)
+//     public function update(Request $request, $id)
 //     {
 //         $validated = $request->validate([
 //             'date' => 'required|date',
@@ -610,22 +693,22 @@ class TimeCardController extends Controller
 //             'status' => 'required|in:IN,OUT,Absent,Leave',
 //         ]);
 
-    //         $timeCard = TimeCard::findOrFail($id);
+//         $timeCard = TimeCard::findOrFail($id);
 //         $timeCard->date = $validated['date'];
 //         $timeCard->time = $validated['time'];
 //         $timeCard->entry = $validated['entry'];
 //         $timeCard->status = $validated['status'];
 //         $timeCard->save();
 
-    //         return response()->json(['message' => 'Time card updated successfully', 'data' => $timeCard]);
+//         return response()->json(['message' => 'Time card updated successfully', 'data' => $timeCard]);
 //     }
 
-    //     public function destroy($id)
+//     public function destroy($id)
 //     {
 //         $timeCard = TimeCard::findOrFail($id);
 //         $timeCard->delete();
 
-    //         return response()->json(['message' => 'Time card deleted successfully']);
+//         return response()->json(['message' => 'Time card deleted successfully']);
 //     }
 
     public function importExcel(Request $request)
@@ -653,8 +736,7 @@ class TimeCardController extends Controller
         \DB::beginTransaction();
         try {
             foreach ($rows as $index => $row) {
-                if ($index === 0)
-                    continue; // skip header row
+                if ($index === 0) continue; // skip header row
 
                 $nic = trim($row[0]);
                 $excelDate = trim($row[1]);
@@ -677,10 +759,8 @@ class TimeCardController extends Controller
                 }
 
                 // Only process if date is within range
-                if ($date < $fromDate)
-                    continue;
-                if ($toDate && $date > $toDate)
-                    continue;
+                if ($date < $fromDate) continue;
+                if ($toDate && $date > $toDate) continue;
 
                 // Parse time from Excel
                 try {
@@ -778,7 +858,7 @@ class TimeCardController extends Controller
                 // Attendance logic
                 if (in_array(strtoupper($status), ['IN', 'OUT', 'LEAVE'])) {
                     // Use store logic for attendance
-                    $entryType = (int) $entry;
+                    $entryType = (int)$entry;
                     $working_hours = null;
                     $actual_date = null;
                     $statusUpper = strtoupper($status);
@@ -890,7 +970,7 @@ class TimeCardController extends Controller
             ->when($search, function ($q) use ($search) {
                 $q->whereHas('employee', function ($q2) use ($search) {
                     $q2->where('nic', 'like', "%$search%")
-                        ->orWhere('attendance_employee_no', 'like', "%$search%");
+                       ->orWhere('attendance_employee_no', 'like', "%$search%");
                 });
             });
 
