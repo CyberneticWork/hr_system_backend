@@ -14,7 +14,7 @@ class AllowanceSeeder extends Seeder
      */
     public function run(): void
     {
-        $categories = ['travel', 'bonus', 'perfomance', 'health', 'other'];
+        $categories = ['travel', 'bonus', 'performance', 'health', 'other'];
         $types = ['fixed', 'variable'];
 
         $allowances = [
@@ -24,7 +24,7 @@ class AllowanceSeeder extends Seeder
             ['Meal Allowance', 'other'],
             ['Transportation Allowance', 'travel'],
             ['Annual Bonus', 'bonus'],
-            ['Overtime Pay', 'perfomance'],
+            ['Overtime Pay', 'performance'],
             ['Housing Allowance', 'other'],
         ];
 

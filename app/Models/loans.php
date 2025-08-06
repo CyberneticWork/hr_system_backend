@@ -19,6 +19,7 @@ class loans extends Model
         'start_from',
         'with_interest',
         'installment_count',
+        'status',
     ];
 
     //relationships

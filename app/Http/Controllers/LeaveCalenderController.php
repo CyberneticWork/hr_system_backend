@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\LeaveCalendar;
+use App\Models\leaveCalendar;
 use Illuminate\Support\Facades\Validator;
 
 class LeaveCalenderController extends Controller
@@ -13,7 +13,7 @@ class LeaveCalenderController extends Controller
      */
     public function index()
     {
-        $leaveCalendars = LeaveCalendar::all();
+        $leaveCalendars = leaveCalendar::all();
         return response()->json($leaveCalendars);
     }
 
@@ -35,7 +35,7 @@ class LeaveCalenderController extends Controller
             return response()->json($validator->errors(), 422);
         }
 
-        $leaveCalendar = LeaveCalendar::create($request->all());
+        $leaveCalendar = leaveCalendar::create($request->all());
         return response()->json($leaveCalendar, 201);
     }
 
@@ -45,7 +45,7 @@ class LeaveCalenderController extends Controller
     public function show(string $id)
     {
 
-        $leaveCalendar = LeaveCalendar::find($id);
+        $leaveCalendar = leaveCalendar::find($id);
         if (!$leaveCalendar) {
             return response()->json(['message' => 'Leave Calendar not found'], 404);
         }
@@ -57,7 +57,7 @@ class LeaveCalenderController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        $leaveCalendar = LeaveCalendar::find($id);
+        $leaveCalendar = leaveCalendar::find($id);
         if (!$leaveCalendar) {
             return response()->json(['message' => 'Leave Calendar not found'], 404);
         }
@@ -84,7 +84,7 @@ class LeaveCalenderController extends Controller
      */
     public function destroy(string $id)
     {
-        $leaveCalendar = LeaveCalendar::find($id);
+        $leaveCalendar = leaveCalendar::find($id);
         if (!$leaveCalendar) {
             return response()->json(['message' => 'Leave Calendar not found'], 404);
         }

@@ -220,6 +220,8 @@ class DatabaseSeeder extends Seeder
                 'active_nopay' => rand(0, 1) ? true : false,
                 'ot_morning' => rand(0, 1),
                 'ot_evening' => rand(0, 1),
+                'ot_morning_rate' => rand(20, 100),
+                'ot_night_rate' => rand(20, 100),
 
                 'bank_name' => $bank['name'],
                 'branch_name' => $branch['name'],

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\NoPayRecord;
-use App\Models\Employee;
+use App\Models\employee;
 use App\Models\time_card;
 use App\Models\leave_master;
 use App\Models\roster;
@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
-class NoPayController extends Controller
+class NopayController extends Controller
 {
     public function index(Request $request)
     {
@@ -163,12 +163,12 @@ class NoPayController extends Controller
         $date = $request->date;
         $status = $request->status ?? 'Pending';
         $carbonDate = Carbon::parse($date);
-        
+
         // Get all active employees
-        $employees = Employee::where('is_active', '1')->get();
-        
+        $employees = employee::where('is_active', '1')->get();
+
         $generatedRecords = [];
-        
+
         foreach ($employees as $employee) {
             // Skip if employee has compensation.nopay_active set to false
             if ($employee->compensation && $employee->compensation->active_nopay === false) {
@@ -191,11 +191,11 @@ class NoPayController extends Controller
             $hasTimeCard = time_card::where('employee_id', $employee->id)
                 ->whereDate('date', $date)
                 ->exists();
-                
+
             if ($hasTimeCard) {
                 continue;
             }
-            
+
             // Check if employee has approved leave for the date
             $hasLeave = leave_master::where('employee_id', $employee->id)
                 ->where('status', 'Approved')
@@ -207,7 +207,7 @@ class NoPayController extends Controller
                         });
                 })
                 ->exists();
-                
+
             if ($hasLeave) {
                 continue;
             }
@@ -217,7 +217,7 @@ class NoPayController extends Controller
             if ($hasHoliday) {
                 continue;
             }
-            
+
             // Create no pay record
             try {
                 $record = NoPayRecord::firstOrCreate([
@@ -229,7 +229,7 @@ class NoPayController extends Controller
                     'status' => $status,
                     'processed_by' => Auth::id(),
                 ]);
-                
+
                 if ($record->wasRecentlyCreated) {
                     $generatedRecords[] = $record;
                 }
@@ -237,7 +237,7 @@ class NoPayController extends Controller
                 return response()->json(['error' => 'Failed to create no-pay record: ' . $e->getMessage()], 500);
             }
         }
-        
+
         return response()->json([
             'message' => count($generatedRecords) . ' no-pay records generated',
             'records' => $generatedRecords
@@ -296,15 +296,15 @@ class NoPayController extends Controller
 
         return false;
     }
-    
+
     public function getNoPayStats(Request $request)
     {
         $query = NoPayRecord::query();
-        
+
         if ($request->has('month')) {
             $query->whereMonth('date', $request->month);
         }
-        
+
         if ($request->has('year')) {
             $query->whereYear('date', $request->year);
         }
@@ -312,11 +312,11 @@ class NoPayController extends Controller
         if ($request->has('status')) {
             $query->where('status', $request->status);
         }
-        
+
         $totalRecords = $query->count();
         $totalDays = $query->sum('no_pay_count');
         $affectedEmployees = $query->distinct('employee_id')->count('employee_id');
-        
+
         return response()->json([
             'total_records' => $totalRecords,
             'total_days' => $totalDays,

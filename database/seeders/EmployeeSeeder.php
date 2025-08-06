@@ -103,8 +103,8 @@ class EmployeeSeeder extends Seeder
         $designations = [1, 2, 3, 4, 5];
 
         // Sri Lankan names for realism
-        $firstNamesMale = ['Isuru', 'Eshan', 'Janitha', 'Thushara', 'Esala', 'Kavinda', 'Dinitha', 'Kushan', 'Saman', 'Nimal'];
-        $firstNamesFemale = ['Rushini', 'Udari', 'Thilini', 'Kavithma', 'Pawani', 'Chinthani', 'Oshini', 'Shashini', 'Nethmi', 'Iresha'];
+        $firstNamesMale = ['Nimesh', 'Madhawa', 'Kamal', 'Arjun', 'Esala', 'Kavinda', 'Dinitha', 'Kushan', 'Saman', 'Nimal'];
+        $firstNamesFemale = ['Hiruni', 'Madara', 'Achini', 'Piumi', 'Rasangi', 'Chinthani', 'Oshini', 'Shashini', 'Nethmi', 'Iresha'];
         $lastNames = ['Bandara', 'Sandaruwan', 'Dananjaya', 'Gunawardane', 'Rupasinghe', 'Wickramasinghe', 'Jayawardena', 'Dissanayake', 'Jaaliya', 'Ranaweera'];
 
         // Generate 30 employees

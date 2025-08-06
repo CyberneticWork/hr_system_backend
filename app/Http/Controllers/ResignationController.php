@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\loans;
 use App\Models\Resignation;
 use App\Models\ResignationDocument;
 use App\Models\employee;
@@ -59,7 +60,7 @@ class ResignationController extends Controller
         // Handle document uploads
         if ($request->hasFile('documents')) {
             foreach ($request->file('documents') as $document) {
-                $path = $document->store('employee/resignations'  , 'public');
+                $path = $document->store('employee/resignations', 'public');
 
                 ResignationDocument::create([
                     'resignation_id' => $resignation->id,
@@ -100,7 +101,29 @@ class ResignationController extends Controller
             'processed_at' => now()
         ]);
 
+
+        if (
+            loans::where('employee_id', $resignation->employee_id)
+                ->where('status', 'active')
+                ->exists()
+        ) {
+            return response()->json(['message' => 'Employee has active loans. Cannot approve resignation.'], 422);
+        }
+        $employee = employee::findOrFail($resignation->employee_id);
+        $employee->update(['is_active' => false]);
+
+
+
+
         return response()->json($resignation);
+
+    }
+
+    public function testFunction($id)
+    {
+        $loanDetails = loans::where('employee_id', $id)->get();
+        // Example function to test route
+        return response()->json($loanDetails);
     }
 
     public function uploadDocuments(Request $request, $id)
@@ -118,7 +141,7 @@ class ResignationController extends Controller
 
         $uploadedDocuments = [];
         foreach ($request->file('documents') as $document) {
-           $path = $document->store('employee/resignations' , 'public');
+            $path = $document->store('employee/resignations', 'public');
 
             $uploadedDocument = ResignationDocument::create([
                 'resignation_id' => $resignation->id,
