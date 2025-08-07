@@ -366,7 +366,7 @@ class TimeCardController extends Controller
             return response()->json(['message' => 'Organization assignment not found'], 404);
         }
 
-        // Find roster for this employee for the given date (fallback logic as before)
+        // Find roster for this employee for the given date (fallback logic)
         $roster = roster::where('employee_id', $employee->id)
             ->whereNull('deleted_at')
             ->where(function ($q) use ($request) {
@@ -523,6 +523,138 @@ class TimeCardController extends Controller
             'fingerprint_clock' => $fingerprintClock,
             'actual_date' => $actual_date, // will be null unless cross-day OUT
         ]);
+
+        // START OF NEW OT CALCULATION CODE
+        if ($status == "OUT") {
+            // Get the appropriate shift code - make sure we get the correct one
+            $shift_code = null;
+            
+            // First try to get shift from the roster for this specific date
+            if ($actual_date) {
+                $dateToCheck = $actual_date;
+            } else {
+                $dateToCheck = $request->date;
+            }
+            
+            // Get roster for the relevant date
+            $employeeRoster = roster::where('employee_id', $employee->id)
+                ->whereNull('deleted_at')
+                ->where(function ($q) use ($dateToCheck) {
+                    $q->whereNull('date_from')->orWhere('date_from', '<=', $dateToCheck);
+                })
+                ->where(function ($q) use ($dateToCheck) {
+                    $q->whereNull('date_to')->orWhere('date_to', '>=', $dateToCheck);
+                })
+                ->first();
+            
+            if ($employeeRoster) {
+                $shift_code = $employeeRoster->shift_code;
+            } else {
+                // Fallback to first roster if specific date roster not found
+                $shift_code = $employee->rosters()->first()->shift_code ?? null;
+            }
+            
+            $shift = shifts::find($shift_code);
+            
+            // Determine if this is a cross-day scenario
+            if ($actual_date) {
+                // Cross-day scenario - get the last IN record to calculate OT properly
+                $lastInRecord = time_card::where('employee_id', $employee->id)
+                    ->where('date', $actual_date)
+                    ->where('status', 'IN')
+                    ->orderBy('time', 'desc')
+                    ->first();
+                
+                $morning_ot = 0;
+                $afternoon_ot = 0;
+                $ot_time = 0;
+                
+                if ($lastInRecord && $shift) {
+                    // Calculate morning OT if employee clocked in before shift start time
+                    $inTimeOnly = Carbon::parse($lastInRecord->time)->format('H:i:s');
+                    $inDateTime = Carbon::parse($actual_date . ' ' . $inTimeOnly);
+                    $shiftStartTime = Carbon::parse($shift->start_time)->format('H:i:s');
+                    $shiftStartDateTime = Carbon::parse($actual_date . ' ' . $shiftStartTime);
+                    
+                    if ($inDateTime->lt($shiftStartDateTime)) {
+                        // Use abs() to ensure positive OT hours
+                        $morning_ot = abs(round($inDateTime->floatDiffInHours($shiftStartDateTime), 2));
+                    }
+                    
+                    // Calculate afternoon OT (from shift end time till actual checkout)
+                    $shiftTimeOnly = Carbon::parse($shift->end_time)->format('H:i:s');
+                    $shiftEndDateTime = Carbon::parse($actual_date . ' ' . $shiftTimeOnly);
+                    $checkoutDateTime = Carbon::parse($request->date . ' ' . $request->time);
+                    
+                    // Ensure we're getting a positive value for afternoon OT
+                    if ($checkoutDateTime->gt($shiftEndDateTime)) {
+                        $afternoon_ot = abs(round($checkoutDateTime->floatDiffInHours($shiftEndDateTime), 2));
+                    }
+                    
+                    // Calculate total OT as sum of morning and afternoon OT
+                    $ot_time = $morning_ot + $afternoon_ot;
+                }
+                
+                $over_time = over_time::create([
+                    'employee_id' => $employee->id,
+                    'shift_code' => $shift_code,
+                    'time_cards_id' => $timeCard->id,
+                    'ot_hours' => $ot_time,
+                    'morning_ot' => $morning_ot,
+                    'afternoon_ot' => $afternoon_ot,
+                    'status' => 'pending'
+                ]);
+            } else {
+                // Same day scenario - regular OT calculation
+                // Find the last IN record for this employee on the same day
+                $lastInRecord = time_card::where('employee_id', $employee->id)
+                    ->where('date', $request->date)
+                    ->where('status', 'IN')
+                    ->orderBy('time', 'desc')
+                    ->first();
+                
+                $morning_ot = 0;
+                $afternoon_ot = 0;
+                $ot_time = 0;
+                
+                if ($lastInRecord && $shift) {
+                    // Calculate morning OT if employee clocked in before shift start time
+                    $inTimeOnly = Carbon::parse($lastInRecord->time)->format('H:i:s');
+                    $inDateTime = Carbon::parse($request->date . ' ' . $inTimeOnly);
+                    $shiftStartTime = Carbon::parse($shift->start_time)->format('H:i:s');
+                    $shiftStartDateTime = Carbon::parse($request->date . ' ' . $shiftStartTime);
+                    
+                    if ($inDateTime->lt($shiftStartDateTime)) {
+                        // Use abs() to ensure positive OT hours
+                        $morning_ot = abs(round($inDateTime->floatDiffInHours($shiftStartDateTime), 2));
+                    }
+                    
+                    // Calculate afternoon OT
+                    $shiftTimeOnly = Carbon::parse($shift->end_time)->format('H:i:s');
+                    $shiftEndDateTime = Carbon::parse($request->date . ' ' . $shiftTimeOnly);
+                    $checkoutDateTime = Carbon::parse($request->date . ' ' . $request->time);
+                    
+                    // Ensure we're getting a positive value for afternoon OT
+                    if ($checkoutDateTime->gt($shiftEndDateTime)) {
+                        $afternoon_ot = abs(round($checkoutDateTime->floatDiffInHours($shiftEndDateTime), 2));
+                    }
+                    
+                    // Calculate total OT as sum of morning and afternoon OT
+                    $ot_time = $morning_ot + $afternoon_ot;
+                }
+                
+                $over_time = over_time::create([
+                    'employee_id' => $employee->id,
+                    'shift_code' => $shift_code,
+                    'time_cards_id' => $timeCard->id,
+                    'ot_hours' => $ot_time,
+                    'morning_ot' => $morning_ot,
+                    'afternoon_ot' => $afternoon_ot,
+                    'status' => 'pending'
+                ]);
+            }
+        }
+        // END OF NEW OT CALCULATION CODE
 
         return response()->json([
             'message' => 'Attendance marked as ' . $status,
@@ -914,7 +1046,7 @@ class TimeCardController extends Controller
                         ->exists();
 
                     if (!$exists) {
-                        time_card::create([
+                        $timeCard = time_card::create([
                             'employee_id' => $employee->id,
                             'time' => $time,
                             'date' => $date,
@@ -924,6 +1056,139 @@ class TimeCardController extends Controller
                             'actual_date' => $actual_date,
                         ]);
                         $results['imported']++;
+                        
+                        // START OF NEW OT CALCULATION CODE
+                        // Only calculate OT for OUT records
+                        if ($statusUpper === 'OUT') {
+                            // Get the appropriate shift code
+                            $shift_code = null;
+                            
+                            // First try to get shift from the roster for this specific date
+                            if ($actual_date) {
+                                $dateToCheck = $actual_date;
+                            } else {
+                                $dateToCheck = $date;
+                            }
+                            
+                            // Get roster for the relevant date
+                            $employeeRoster = roster::where('employee_id', $employee->id)
+                                ->whereNull('deleted_at')
+                                ->where(function ($q) use ($dateToCheck) {
+                                    $q->whereNull('date_from')->orWhere('date_from', '<=', $dateToCheck);
+                                })
+                                ->where(function ($q) use ($dateToCheck) {
+                                    $q->whereNull('date_to')->orWhere('date_to', '>=', $dateToCheck);
+                                })
+                                ->first();
+                            
+                            if ($employeeRoster) {
+                                $shift_code = $employeeRoster->shift_code;
+                            } else {
+                                // Fallback to first roster if specific date roster not found
+                                $shift_code = $employee->rosters()->first()->shift_code ?? null;
+                            }
+                            
+                            $shift = shifts::find($shift_code);
+                            
+                            // Determine if this is a cross-day scenario
+                            if ($actual_date) {
+                                // Cross-day scenario - get the last IN record to calculate OT properly
+                                $lastInRecord = time_card::where('employee_id', $employee->id)
+                                    ->where('date', $actual_date)
+                                    ->where('status', 'IN')
+                                    ->orderBy('time', 'desc')
+                                    ->first();
+                                
+                                $morning_ot = 0;
+                                $afternoon_ot = 0;
+                                $ot_time = 0;
+                                
+                                if ($lastInRecord && $shift) {
+                                    // Calculate morning OT if employee clocked in before shift start time
+                                    $inTimeOnly = Carbon::parse($lastInRecord->time)->format('H:i:s');
+                                    $inDateTime = Carbon::parse($actual_date . ' ' . $inTimeOnly);
+                                    $shiftStartTime = Carbon::parse($shift->start_time)->format('H:i:s');
+                                    $shiftStartDateTime = Carbon::parse($actual_date . ' ' . $shiftStartTime);
+                                    
+                                    if ($inDateTime->lt($shiftStartDateTime)) {
+                                        // Use abs() to ensure positive OT hours
+                                        $morning_ot = abs(round($inDateTime->floatDiffInHours($shiftStartDateTime), 2));
+                                    }
+                                    
+                                    // Calculate afternoon OT (from shift end time till actual checkout)
+                                    $shiftTimeOnly = Carbon::parse($shift->end_time)->format('H:i:s');
+                                    $shiftEndDateTime = Carbon::parse($actual_date . ' ' . $shiftTimeOnly);
+                                    $checkoutDateTime = Carbon::parse($date . ' ' . $time);
+                                    
+                                    // Ensure we're getting a positive value for afternoon OT
+                                    if ($checkoutDateTime->gt($shiftEndDateTime)) {
+                                        $afternoon_ot = abs(round($checkoutDateTime->floatDiffInHours($shiftEndDateTime), 2));
+                                    }
+                                    
+                                    // Calculate total OT as sum of morning and afternoon OT
+                                    $ot_time = $morning_ot + $afternoon_ot;
+                                }
+                                
+                                $over_time = over_time::create([
+                                    'employee_id' => $employee->id,
+                                    'shift_code' => $shift_code,
+                                    'time_cards_id' => $timeCard->id,
+                                    'ot_hours' => $ot_time,
+                                    'morning_ot' => $morning_ot,
+                                    'afternoon_ot' => $afternoon_ot,
+                                    'status' => 'pending'
+                                ]);
+                            } else {
+                                // Same day scenario - regular OT calculation
+                                // Find the last IN record for this employee on the same day
+                                $lastInRecord = time_card::where('employee_id', $employee->id)
+                                    ->where('date', $date)
+                                    ->where('status', 'IN')
+                                    ->orderBy('time', 'desc')
+                                    ->first();
+                                
+                                $morning_ot = 0;
+                                $afternoon_ot = 0;
+                                $ot_time = 0;
+                                
+                                if ($lastInRecord && $shift) {
+                                    // Calculate morning OT if employee clocked in before shift start time
+                                    $inTimeOnly = Carbon::parse($lastInRecord->time)->format('H:i:s');
+                                    $inDateTime = Carbon::parse($date . ' ' . $inTimeOnly);
+                                    $shiftStartTime = Carbon::parse($shift->start_time)->format('H:i:s');
+                                    $shiftStartDateTime = Carbon::parse($date . ' ' . $shiftStartTime);
+                                    
+                                    if ($inDateTime->lt($shiftStartDateTime)) {
+                                        // Use abs() to ensure positive OT hours
+                                        $morning_ot = abs(round($inDateTime->floatDiffInHours($shiftStartDateTime), 2));
+                                    }
+                                    
+                                    // Calculate afternoon OT
+                                    $shiftTimeOnly = Carbon::parse($shift->end_time)->format('H:i:s');
+                                    $shiftEndDateTime = Carbon::parse($date . ' ' . $shiftTimeOnly);
+                                    $checkoutDateTime = Carbon::parse($date . ' ' . $time);
+                                    
+                                    // Ensure we're getting a positive value for afternoon OT
+                                    if ($checkoutDateTime->gt($shiftEndDateTime)) {
+                                        $afternoon_ot = abs(round($checkoutDateTime->floatDiffInHours($shiftEndDateTime), 2));
+                                    }
+                                    
+                                    // Calculate total OT as sum of morning and afternoon OT
+                                    $ot_time = $morning_ot + $afternoon_ot;
+                                }
+                                
+                                $over_time = over_time::create([
+                                    'employee_id' => $employee->id,
+                                    'shift_code' => $shift_code,
+                                    'time_cards_id' => $timeCard->id,
+                                    'ot_hours' => $ot_time,
+                                    'morning_ot' => $morning_ot,
+                                    'afternoon_ot' => $afternoon_ot,
+                                    'status' => 'pending'
+                                ]);
+                            }
+                        }
+                        // END OF NEW OT CALCULATION CODE
                     }
                 } elseif (strtoupper($status) === 'ABSENT') {
                     // Prevent duplicate absence
