@@ -3,13 +3,18 @@
 namespace App\Http\Controllers;
 
 use App\Models\employee;
-use App\Models\employee_allowances;
-use App\Models\employee_deductions;
+use App\Models\deduction;
 use App\Models\over_time;
+use App\Models\allowances;
 use Illuminate\Http\Request;
 use App\Models\salary_process;
 use Illuminate\Support\Facades\DB;
+use App\Models\employee_allowances;
+use App\Models\employee_deductions;
 use Illuminate\Support\Facades\Auth;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\EmployeeAllowancesImport;
+use App\Imports\EmployeeDeductionsImport;
 use Illuminate\Support\Facades\Validator;
 
 
@@ -662,4 +667,61 @@ class SalaryProcessController extends Controller
 
         return response()->json(['message' => 'Payslips marked as issued successfully']);
     }
+
+    public function fetchExcelData(Request $request)
+    {
+        $employees = employee::whereIn('id', $request->selectedEmployees)
+            ->get([
+                'id',
+                'nic',
+                'full_name',
+            ]);
+        $allowance = "";
+        $deduction = "";
+        if ($request->bulkActionType == 'allowance') {
+            $allowance = allowances::where('id', $request->bulkActionId)
+                ->get(['id', 'allowance_name']);
+        } elseif ($request->bulkActionType == 'deduction') {
+            $deduction = deduction::where('id', $request->bulkActionId)
+                ->get(['id', 'deduction_name']);
+        }
+
+        return response()->json([$employees, $allowance, $deduction], 200);
+    }
+
+
+    public function importExcelData(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:csv,txt',
+            'type' => 'required|in:allowances,deductions' // Add this to specify import type
+        ]);
+
+        try {
+            $import = null;
+            $message = '';
+
+            if ($request->type === 'allowances') {
+                $import = new EmployeeAllowancesImport();
+                $message = 'Employee allowances imported successfully';
+            } else {
+                $import = new EmployeeDeductionsImport();
+                $message = 'Employee deductions imported successfully';
+            }
+
+            Excel::import($import, $request->file('file'));
+
+            return response()->json([
+                'message' => $message,
+                // 'imported_count' => $import->getRowCount()
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Error importing file: ' . $e->getMessage()
+            ], 422);
+        }
+    }
+
+
 }

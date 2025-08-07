@@ -63,6 +63,8 @@ Route::apiResource('leave-masters', LeaveMasterController::class);
 Route::apiResource('salary-process', SalaryProcessController::class);
 Route::get('salary/processed', [SalaryProcessController::class, 'getProcessedSalaries']);
 Route::post('/salary/process/mark-issued', [SalaryProcessController::class, 'markAsIssued']);
+Route::post('/salary/process/fetchExcelData', [SalaryProcessController::class, 'fetchExcelData']);
+Route::post('/salary/process/importExcelData', [SalaryProcessController::class, 'importExcelData']);
 Route::get('/salary/update/status', [SalaryProcessController::class, 'updateSlaryStatus']);
 Route::apiResource('salary', SalaryController::class);
 
