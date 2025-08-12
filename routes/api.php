@@ -66,6 +66,7 @@ Route::post('/salary/process/mark-issued', [SalaryProcessController::class, 'mar
 Route::post('/salary/process/fetchExcelData', [SalaryProcessController::class, 'fetchExcelData']);
 Route::post('/salary/process/importExcelData', [SalaryProcessController::class, 'importExcelData']);
 Route::get('/salary/update/status', [SalaryProcessController::class, 'updateSlaryStatus']);
+Route::get('/salary/process/csv', [SalaryController::class, 'salaryCSV']);
 Route::apiResource('salary', SalaryController::class);
 
 

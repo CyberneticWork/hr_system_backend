@@ -90,4 +90,83 @@ class SalaryController extends Controller
         $salary->delete();
         return response()->json($salary, 200);
     }
+
+    public function salaryCSV(Request $request)
+    {
+        // Get processed salaries
+        $salaries = salary_process::with(['employee', 'compensation', 'contactDetails'])
+            ->where('status', 'processed')
+            ->get();
+
+        if ($salaries->isEmpty()) {
+            return response()->json(['message' => 'No processed salaries found'], 404);
+        }
+        // return response()->json($salaries, 200);
+        // CSV filename with current date
+        $filename = 'CEFT_Salary_Payments_' . now()->format('Y-m-d') . '.csv';
+
+        // Open a file handle for writing
+        $handle = fopen('php://temp', 'w');
+
+        // Add CSV headers (matching the Excel template)
+        fputcsv($handle, [
+            'Record Identifier',
+            'Value Date',
+            'Payment Method Name',
+            'Debit Account No.',
+            'Payable Currency',
+            'Payment Amount',
+            'Beneficiary Code (Request)',
+            'Beneficiary Name',
+            'Beneficiary Account No',
+            'Beneficiary Bank Code',
+            'Beneficiary Bank Branch Code',
+            'Corporate Ref No',
+            'Payment Instructions 1',
+            'Payment Instructions 2',
+            'Remarks',
+            'Remittance Code',
+            'Beneficiary Advise Dispatch Mode',
+            'Phone/Mobile No',
+            'Email'
+        ]);
+
+        // Add data rows
+        foreach ($salaries as $salary) {
+            fputcsv($handle, [
+                $salary->id, // Record Identifier (Debit)
+                now()->format('d/m/Y'), // Value Date (current date)
+                'CEFTS', // Payment Method Name
+                '000123456789', // Debit Account No. (hardcoded or configurable)
+                'LKR', // Payable Currency
+                $salary->salary_breakdown['net_salary'], // Payment Amount
+                '', // Beneficiary Code (empty)
+                $salary->full_name, // Beneficiary Name
+                $salary->compensation->bank_account_no, // Beneficiary Account No
+                $salary->compensation->bank_code, // Beneficiary Bank Code
+                $salary->compensation->branch_code, // Beneficiary Bank Branch Code
+                $salary->employee->attendance_employee_no, // Corporate Ref No
+                "Salary for {$salary->month}-{$salary->year}", // Payment Instructions 1
+                '', // Payment Instructions 2 (empty)
+                'Salary Payment', // Remarks
+                '', // Remittance Code (empty)
+                '', // Beneficiary Advise Dispatch Mode (empty)
+                $salary->contactDetails->mobile_line, // Phone/Mobile No (empty)
+                $salary->contactDetails->email  // Email (empty)
+            ]);
+        }
+
+        // Reset file pointer
+        rewind($handle);
+
+        // Get CSV content
+        $csv = stream_get_contents($handle);
+        fclose($handle);
+
+        // Return CSV as downloadable response
+        return response($csv, 200, [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => "attachment; filename=\"$filename\"",
+        ]);
+    }
 }

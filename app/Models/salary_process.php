@@ -62,5 +62,10 @@ class salary_process extends Model
         return $this->belongsTo(compensation::class, 'employee_id');
     }
 
+    public function contactDetails()
+    {
+        return $this->belongsTo(contact_detail::class, 'employee_id');
+    }
+
 
 }
