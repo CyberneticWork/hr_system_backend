@@ -10,6 +10,7 @@ use App\Models\salary_process;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use App\Models\loans;
 
 
 class SalaryProcessController extends Controller
@@ -54,19 +55,68 @@ class SalaryProcessController extends Controller
     public function updateSlaryStatus(Request $request)
     {
 
-        if ($request->has('status') && $request->status == 'processed') {
-            $salaryData = salary_process::where('status', 'pending')->update([
-                'status' => 'processed',
-            ]);
-            return response()->json($salaryData, 200);
+        DB::beginTransaction();
+
+        try {
+            if ($request->has('status') && $request->status == 'processed') {
+                $salaryData = salary_process::where('status', 'pending')->update([
+                    'status' => 'processed',
+                ]);
+                DB::commit();
+                return response()->json($salaryData, 200);
+            }
+
+            if ($request->has('status') && $request->status == 'issued') {
+                // Get all salary processes that are being marked as issued
+                $salaryProcesses = salary_process::where('status', 'processed')->get();
+
+                foreach ($salaryProcesses as $process) {
+                    // Get installment_count from salary_process
+                    $installmentCount = $process->installment_count;
+
+                    // Reduce installment_count by 1 in loans table if exists
+                    if ($installmentCount !== null) {
+                        $newInstallmentCount = max(0, $installmentCount - 1);
+                        loans::where('employee_id', $process->employee_id)
+                            ->where('status', 'active')
+                            ->update([
+                                'installment_count' => $newInstallmentCount,
+                                'status' => $newInstallmentCount == 0 ? 'completed' : 'active'
+                            ]);
+                    }
+                }
+
+                // Update all processed salaries to issued
+                salary_process::where('status', 'processed')->update([
+                    'status' => 'issued',
+                ]);
+
+                DB::commit();
+                return response()->json(['message' => 'Salaries marked as issued and loan installments updated'], 200);
+            }
+
+            DB::rollBack();
+            return response()->json(['message' => 'Invalid status'], 400);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Error updating status: ' . $e->getMessage()], 500);
         }
-        if ($request->has('status') && $request->status == 'issued') {
-            $salaryData = salary_process::where('status', 'processed')->update([
-                'status' => 'issued',
-            ]);
-            return response()->json($salaryData, 200);
-        }
-        return response()->json(['message' => 'Invalid status'], 400);
+
+
+        // if ($request->has('status') && $request->status == 'processed') {
+        //     $salaryData = salary_process::where('status', 'pending')->update([
+        //         'status' => 'processed',
+        //     ]);
+        //     return response()->json($salaryData, 200);
+        // }
+        // if ($request->has('status') && $request->status == 'issued') {
+        //     $salaryData = salary_process::where('status', 'processed')->update([
+        //         'status' => 'issued',
+        //     ]);
+        //     return response()->json($salaryData, 200);
+        // }
+        // return response()->json(['message' => 'Invalid status'], 400);
 
     }
 
@@ -599,10 +649,40 @@ class SalaryProcessController extends Controller
             'employee_ids.*' => 'exists:salary_processes,employee_id'
         ]);
 
-        salary_process::whereIn('employee_id', $validated['employee_ids'])
+        // Get all relevant salary processes
+        $salaryProcesses = salary_process::whereIn('employee_id', $validated['employee_ids'])
             ->where('status', 'processed')
-            ->update(['status' => 'issued']);
+            ->get();
 
-        return response()->json(['message' => 'Payslips marked as issued successfully']);
+        DB::beginTransaction();
+
+        try {
+            foreach ($salaryProcesses as $process) {
+                // Get installment_count from salary_process
+                $installmentCount = $process->installment_count;
+
+                // Reduce installment_count by 1 in loans table
+                if ($installmentCount !== null) {
+                    $newInstallmentCount = max(0, $installmentCount - 1);
+
+                    loans::where('employee_id', $process->employee_id)
+                        ->where('status', 'active')
+                        ->update([
+                            'installment_count' => $newInstallmentCount,
+                            // If installment count reaches 0, mark as completed
+                            'status' => $newInstallmentCount == 0 ? 'completed' : 'active'
+                        ]);
+                }
+
+                // Mark salary as issued
+                $process->update(['status' => 'issued']);
+            }
+
+            DB::commit();
+            return response()->json(['message' => 'Payslips marked as issued and loan installments updated successfully']);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json(['message' => 'Error updating payslips and loans: ' . $e->getMessage()], 500);
+        }
     }
 }
