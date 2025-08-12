@@ -14,7 +14,7 @@ class EmployeeDeductionsImport implements ToModel, WithHeadingRow, WithValidatio
         return new employee_deductions([
             'employee_id' => $row['id'] ?? $row['ID'], // Handles both cases
             'deduction_id' => $row['deduction_id'] ?? $row['deduction id'] ?? $row['Deduction ID'], // Multiple possible headers
-            'custom_amount' => $row['deduction_amount_lkr'] ?? $row['deduction amount (lkr)'] ?? $row['Deduction Amount (LKR)'] ?? $row['Deduction Amount (LKR)'], // Multiple possible headers
+            'custom_amount' => $row['amount_lkr'] ?? $row['amount (lkr)'] ?? $row['Amount (LKR)'], // Multiple possible headers
             'is_active' => true
         ]);
     }
@@ -33,7 +33,7 @@ class EmployeeDeductionsImport implements ToModel, WithHeadingRow, WithValidatio
         // Normalize all possible header variations
         $data['id'] = $data['ID'] ?? $data['id'] ?? null;
         $data['deduction_id'] = $data['Deduction ID'] ?? $data['deduction id'] ?? $data['deduction_id'] ?? $data['deduction_id'] ?? null;
-        $data['deduction_amount_lkr'] = $data['Deduction Amount (LKR)'] ?? $data['Deduction Amount (LKR)'] ?? $data['deduction amount (lkr)'] ?? $data['deduction_amount_lkr'] ?? null;
+        $data['deduction_amount_lkr'] = $data['Amount (LKR)'] ?? $data['amount (lkr)'] ?? $data['amount_lkr'] ?? null;
 
         return $data;
     }
