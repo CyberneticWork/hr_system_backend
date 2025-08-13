@@ -31,8 +31,8 @@ class DatabaseSeeder extends Seeder
     {
 
         User::create([
-            'name' => 'Admin',
-            'email' => 'admin@mail.com',
+            'name' => 'Isuru Bandara',
+            'email' => 'isuru@mail.com',
             'password' => '123456789',
             'role' => 'admin',
         ]);
@@ -71,23 +71,23 @@ class DatabaseSeeder extends Seeder
 
         $shifts = [
             ['001', 'No OT - WD', '08:00:00', '17:00:00', '08:00:00', '17:00:00', '00:00:00', false, 4.5],
-            // ['002', 'Snr Mgt - FM', '08:15:00', '17:15:00', '08:15:00', '17:15:00', '00:00:00', false, 4.5],
-            // ['003', 'Snr Mgt - Purchasing', '07:45:00', '16:45:00', '07:45:00', '16:45:00', '00:00:00', false, 4.5],
-            // ['004', 'Office Executive - WD', '08:00:00', '17:00:00', '08:00:00', '17:00:00', '08:00:00', false, 5.0],
-            // ['005', 'Office Executive - WE', '08:00:00', '13:00:00', '08:00:00', '13:00:00', '08:00:00', false, 5.0],
-            // ['006', 'Production Mgr - WD', '08:00:00', '17:00:00', '07:30:00', '17:15:00', '08:00:00', false, 4.5],
-            // ['007', 'Production Mgr - WE', '08:00:00', '13:00:00', '07:30:00', '17:15:00', '08:00:00', false, 5.0],
-            // ['008', 'QC - WE', '08:00:00', '13:00:00', '08:00:00', '17:00:00', '08:00:00', false, 5.0],
-            // ['009', 'No OT with Late - WD', '08:00:00', '17:00:00', '08:00:00', '17:00:00', '08:00:00', false, 4.5],
-            // ['010', 'Production - WD', '08:00:00', '17:00:00', '07:30:00', '17:00:00', '08:00:00', false, 5.0],
-            // ['011', 'Production - WE', '08:00:00', '13:00:00', '07:30:00', '17:00:00', '08:00:00', false, 5.0],
-            // ['012', 'Production - Trainee', '08:00:00', '17:00:00', '08:00:00', '17:00:00', '08:00:00', false, 4.5],
-            // ['013', 'No OT with Late - WE', '12:00:00', '17:00:00', '12:00:00', '17:00:00', '12:00:00', false, 5.0],
-            // ['014', 'OT with Late - WE', '12:00:00', '17:00:00', '11:30:00', '17:00:00', '12:00:00', false, 5.0],
-            // ['015', 'Security - WD Morning', '07:00:00', '15:00:00', '07:00:00', '19:00:00', '07:00:00', false, 4.0],
-            // ['016', 'Security - WD Night', '19:00:00', '03:00:00', '07:00:00', '07:00:00', '07:00:00', true, 4.0],
-            // ['017', 'Security - WE Morning', '07:00:00', '15:00:00', '07:00:00', '19:00:00', '07:00:00', false, 5.0],
-            // ['018', 'Security - WE Night', '19:00:00', '00:00:00', '07:00:00', '07:00:00', '07:00:00', true, 5.0],
+            ['002', 'Snr Mgt - FM', '08:15:00', '17:15:00', '08:15:00', '17:15:00', '00:00:00', false, 4.5],
+            ['003', 'Snr Mgt - Purchasing', '07:45:00', '16:45:00', '07:45:00', '16:45:00', '00:00:00', false, 4.5],
+            ['004', 'Office Executive - WD', '08:00:00', '17:00:00', '08:00:00', '17:00:00', '08:00:00', false, 5.0],
+            ['005', 'Office Executive - WE', '08:00:00', '13:00:00', '08:00:00', '13:00:00', '08:00:00', false, 5.0],
+            ['006', 'Production Mgr - WD', '08:00:00', '17:00:00', '07:30:00', '17:15:00', '08:00:00', false, 4.5],
+            ['007', 'Production Mgr - WE', '08:00:00', '13:00:00', '07:30:00', '17:15:00', '08:00:00', false, 5.0],
+            ['008', 'QC - WE', '08:00:00', '13:00:00', '08:00:00', '17:00:00', '08:00:00', false, 5.0],
+            ['009', 'No OT with Late - WD', '08:00:00', '17:00:00', '08:00:00', '17:00:00', '08:00:00', false, 4.5],
+            ['010', 'Production - WD', '08:00:00', '17:00:00', '07:30:00', '17:00:00', '08:00:00', false, 5.0],
+            ['011', 'Production - WE', '08:00:00', '13:00:00', '07:30:00', '17:00:00', '08:00:00', false, 5.0],
+            ['012', 'Production - Trainee', '08:00:00', '17:00:00', '08:00:00', '17:00:00', '08:00:00', false, 4.5],
+            ['013', 'No OT with Late - WE', '12:00:00', '17:00:00', '12:00:00', '17:00:00', '12:00:00', false, 5.0],
+            ['014', 'OT with Late - WE', '12:00:00', '17:00:00', '11:30:00', '17:00:00', '12:00:00', false, 5.0],
+            ['015', 'Security - WD Morning', '07:00:00', '15:00:00', '07:00:00', '19:00:00', '07:00:00', false, 4.0],
+            ['016', 'Security - WD Night', '19:00:00', '03:00:00', '07:00:00', '07:00:00', '07:00:00', true, 4.0],
+            ['017', 'Security - WE Morning', '07:00:00', '15:00:00', '07:00:00', '19:00:00', '07:00:00', false, 5.0],
+            ['018', 'Security - WE Night', '19:00:00', '00:00:00', '07:00:00', '07:00:00', '07:00:00', true, 5.0],
         ];
 
         foreach ($shifts as $shift) {
@@ -120,38 +120,38 @@ class DatabaseSeeder extends Seeder
         //     ]);
         // }
 
-        // pay_deductions::insert([
-        //     [
-        //         'pay_deduction_code' => '001',
-        //         'pay_deduction_name' => 'Salary Advance',
-        //         'pay_deduction_amount' => 0.00,
-        //     ],
-        //     [
-        //         'pay_deduction_code' => '002',
-        //         'pay_deduction_name' => 'Meal Deduction',
-        //         'pay_deduction_amount' => 0.00,
-        //     ],
-        //     [
-        //         'pay_deduction_code' => '003',
-        //         'pay_deduction_name' => 'Other Deduction',
-        //         'pay_deduction_amount' => 0.00,
-        //     ],
-        //     [
-        //         'pay_deduction_code' => '004',
-        //         'pay_deduction_name' => 'Bond Deduction',
-        //         'pay_deduction_amount' => 0.00,
-        //     ],
-        // ]);
+        pay_deductions::insert([
+            [
+                'pay_deduction_code' => '001',
+                'pay_deduction_name' => 'Salary Advance',
+                'pay_deduction_amount' => 0.00,
+            ],
+            [
+                'pay_deduction_code' => '002',
+                'pay_deduction_name' => 'Meal Deduction',
+                'pay_deduction_amount' => 0.00,
+            ],
+            [
+                'pay_deduction_code' => '003',
+                'pay_deduction_name' => 'Other Deduction',
+                'pay_deduction_amount' => 0.00,
+            ],
+            [
+                'pay_deduction_code' => '004',
+                'pay_deduction_name' => 'Bond Deduction',
+                'pay_deduction_amount' => 0.00,
+            ],
+        ]);
 
 
 
         $this->call([
-            // EmployeeSeeder::class,
-            // AllowanceSeeder::class,
-            // DeductionSeeder::class,
+            EmployeeSeeder::class,
+            AllowanceSeeder::class,
+            DeductionSeeder::class,
         ]);
 
-        // $employees = employee::all();
+        $employees = employee::all();
 
         // Sri Lankan banks for realism
         $banks = [
@@ -177,66 +177,66 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Ratnapura Branch', 'code' => '008'],
         ];
 
-        // foreach ($employees as $employee) {
-        //     // Determine base salary based on company and position
-        //     $companyId = $employee->organizationAssignment->company_id;
+        foreach ($employees as $employee) {
+            // Determine base salary based on company and position
+            $companyId = $employee->organizationAssignment->company_id;
 
-        //     // Salary ranges based on company (ABC and XYZ pay more)
-        //     if ($companyId == 1 || $companyId == 2) {
-        //         $baseSalary = rand(60000, 250000); // 60k to 250k LKR
-        //     } else {
-        //         $baseSalary = rand(40000, 180000); // 40k to 180k LKR
-        //     }
+            // Salary ranges based on company (ABC and XYZ pay more)
+            if ($companyId == 1 || $companyId == 2) {
+                $baseSalary = rand(60000, 250000); // 60k to 250k LKR
+            } else {
+                $baseSalary = rand(40000, 180000); // 40k to 180k LKR
+            }
 
-        //     // Adjust salary based on years of service
-        //     $joiningDate = Carbon::parse($employee->organizationAssignment->date_of_joining);
-        //     $yearsOfService = $joiningDate->diffInYears(Carbon::now());
+            // Adjust salary based on years of service
+            $joiningDate = Carbon::parse($employee->organizationAssignment->date_of_joining);
+            $yearsOfService = $joiningDate->diffInYears(Carbon::now());
 
-        //     if ($yearsOfService > 0) {
-        //         $incrementPercentage = min(50, $yearsOfService * 5); // Max 50% increment
-        //         $baseSalary = $baseSalary * (1 + ($incrementPercentage / 100));
-        //     }
+            if ($yearsOfService > 0) {
+                $incrementPercentage = min(50, $yearsOfService * 5); // Max 50% increment
+                $baseSalary = $baseSalary * (1 + ($incrementPercentage / 100));
+            }
 
-        //     // Round to nearest 1000
-        //     $baseSalary = round($baseSalary / 1000) * 1000;
+            // Round to nearest 1000
+            $baseSalary = round($baseSalary / 1000) * 1000;
 
-        //     // Determine if employee is eligible for increment
-        //     $isEligibleForIncrement = rand(0, 1) && $yearsOfService > 1;
+            // Determine if employee is eligible for increment
+            $isEligibleForIncrement = rand(0, 1) && $yearsOfService > 1;
 
-        //     // Random bank details
-        //     $bank = $banks[array_rand($banks)];
-        //     $branch = $branches[array_rand($branches)];
+            // Random bank details
+            $bank = $banks[array_rand($banks)];
+            $branch = $branches[array_rand($branches)];
 
-        //     compensation::create([
-        //         'employee_id' => $employee->id,
-        //         'basic_salary' => $baseSalary,
-        //         'increment_value' => $isEligibleForIncrement ? rand(5, 15) . '%' : null,
-        //         'increment_effected_date' => $isEligibleForIncrement ? Carbon::now()->subMonths(rand(1, 11))->format('Y-m-d') : null,
+            compensation::create([
+                'employee_id' => $employee->id,
+                'basic_salary' => $baseSalary,
+                'increment_value' => $isEligibleForIncrement ? rand(5, 15) . '%' : null,
+                'increment_effected_date' => $isEligibleForIncrement ? Carbon::now()->subMonths(rand(1, 11))->format('Y-m-d') : null,
 
-        //         'enable_epf_etf' => rand(0, 1),
-        //         'ot_active' => rand(0, 1),
-        //         'early_deduction' => rand(0, 1),
-        //         'increment_active' => $isEligibleForIncrement,
-        //         'active_nopay' => rand(0, 1) ? true : false,
-        //         'ot_morning' => rand(0, 1),
-        //         'ot_evening' => rand(0, 1),
-        //         'ot_morning_rate' => rand(20, 100),
-        //         'ot_night_rate' => rand(20, 100),
+                'enable_epf_etf' => rand(0, 1),
+                'ot_active' => rand(0, 1),
+                'early_deduction' => rand(0, 1),
+                'increment_active' => $isEligibleForIncrement,
+                'active_nopay' => rand(0, 1) ? true : false,
+                'ot_morning' => rand(0, 1),
+                'ot_evening' => rand(0, 1),
+                'ot_morning_rate' => rand(20, 100),
+                'ot_night_rate' => rand(20, 100),
 
-        //         'bank_name' => $bank['name'],
-        //         'branch_name' => $branch['name'],
-        //         'bank_code' => $bank['code'],
-        //         'branch_code' => $branch['code'],
-        //         'bank_account_no' => '10' . rand(100000000, 999999999),
+                'bank_name' => $bank['name'],
+                'branch_name' => $branch['name'],
+                'bank_code' => $bank['code'],
+                'branch_code' => $branch['code'],
+                'bank_account_no' => '10' . rand(100000000, 999999999),
 
-        //         'br1' => rand(0, 1),
-        //         'br2' => rand(0, 1),
+                'br1' => rand(0, 1),
+                'br2' => rand(0, 1),
 
-        //         'comments' => rand(0, 1) ? 'Regular employee with standard benefits' : null,
-        //         'secondary_emp' => rand(0, 1) ? true : false,
-        //         'primary_emp_basic' => rand(0, 1) ? true : false,
-        //     ]);
-        // }
+                'comments' => rand(0, 1) ? 'Regular employee with standard benefits' : null,
+                'secondary_emp' => rand(0, 1) ? true : false,
+                'primary_emp_basic' => rand(0, 1) ? true : false,
+            ]);
+        }
 
 
 
