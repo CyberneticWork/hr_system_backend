@@ -24,6 +24,8 @@ class OvertimeController extends Controller
                     'ot_hours' => $overtime->ot_hours,
                     'morning_ot' => $overtime->morning_ot,
                     'evening_ot' => $overtime->afternoon_ot,
+                    'ot_morning_rate' => data_get($overtime, 'employee.compensation.ot_morning_rate'),
+                    'ot_night_rate' => data_get($overtime, 'employee.compensation.ot_night_rate'),
                     'status' => $overtime->status,
                     'created_at' => $overtime->created_at,
                 ];
