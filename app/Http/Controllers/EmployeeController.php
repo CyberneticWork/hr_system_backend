@@ -194,7 +194,7 @@ class EmployeeController extends Controller
                 'temporaryAddress' => 'nullable|string|max:255',
                 'email' => 'required|email',
                 'landLine' => 'nullable|string|max:20',
-                'mobileLine' => 'nullable|string|max:20',
+                'mobileLine' => 'required|string|max:20',
                 'gnDivision' => 'nullable|string|max:100',
                 'policeStation' => 'nullable|string|max:100',
                 'district' => 'required|string|max:100',
@@ -210,11 +210,11 @@ class EmployeeController extends Controller
                 'basicSalary' => 'required|numeric',
                 'incrementValue' => 'nullable|numeric',
                 'incrementEffectiveFrom' => 'nullable|date',
-                'bankName' => 'nullable|string|max:100',
-                'branchName' => 'nullable|string|max:100',
-                'bankCode' => 'nullable|string|max:50',
-                'branchCode' => 'nullable|string|max:50',
-                'bankAccountNo' => 'nullable|string|max:50',
+                'bankName' => 'required|string|max:100',
+                'branchName' => 'required|string|max:100',
+                'bankCode' => 'required|string|max:50',
+                'branchCode' => 'required|string|max:50',
+                'bankAccountNo' => 'required|string|max:50',
                 'comments' => 'nullable|string|max:255',
                 'secondaryEmp' => 'required|boolean',
                 'primaryEmploymentBasic' => 'required|boolean',
@@ -225,8 +225,8 @@ class EmployeeController extends Controller
                 'nopayActive' => 'required|boolean',
                 'morningOt' => 'required|boolean',
                 'eveningOt' => 'required|boolean',
-                'ot_morning_rate' => 'required|numeric',
-                'ot_night_rate' => 'required|numeric',
+                'ot_morning_rate' => 'nullable|numeric',
+                'ot_night_rate' => 'nullable|numeric',
                 'budgetaryReliefAllowance2015' => 'required|boolean',
                 'budgetaryReliefAllowance2016' => 'required|boolean',
             ]);
@@ -252,7 +252,7 @@ class EmployeeController extends Controller
                 'resignationLetter' => 'nullable',
                 'resignationApproved' => 'required|boolean',
                 'currentStatus' => 'required|boolean',
-                'dayOff' => 'required|string'
+                'dayOff' => 'nullable|string'
             ]);
 
             // Add errors to main validator
@@ -312,8 +312,8 @@ class EmployeeController extends Controller
             // Create organization assignment
             $orgAssignment = organization_assignment::create([
                 'company_id' => $organization['company'],
-                'department_id' => $organization['department'],
-                'sub_department_id' => $organization['subDepartment'],
+                'department_id' => !empty($organization['department']) ? $organization['department'] : null,
+                'sub_department_id' => !empty($organization['subDepartment']) ? $organization['subDepartment'] : null,
                 'designation_id' => $organization['designation'],
                 'current_supervisor' => $organization['currentSupervisor'] ?? null,
                 'date_of_joining' => $organization['dateOfJoined'],
