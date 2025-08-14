@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\loans;
-use App\Models\employee; 
+use App\Models\employee;
 class LoanController extends Controller
 {
     /**
@@ -20,20 +20,27 @@ class LoanController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'loan_id' => 'required|string|unique:loans,loan_id',
-            'employee_id' => 'required|exists:employees,id',
-            'loan_amount' => 'required|numeric|min:0',
-            'interest_rate_per_annum' => 'nullable|numeric|min:0',
-            'installment_amount' => 'required|numeric|min:0',
-            'start_from' => 'required|date',
-            'with_interest' => 'required|boolean',
-            'installment_count' => 'nullable|integer|min:1',
-        ]);
+        try {
+            $validated = $request->validate([
+                'loan_id' => 'required|string|unique:loans,loan_id',
+                'employee_id' => 'required|exists:employees,id',
+                'loan_amount' => 'required|numeric|min:0',
+                'interest_rate_per_annum' => 'nullable|numeric|min:0',
+                'installment_amount' => 'required|numeric|min:0',
+                'start_from' => 'required|date',
+                'with_interest' => 'required|boolean',
+                'installment_count' => 'nullable|integer|min:1',
+            ]);
 
-        $loan = loans::create($validated);
+            $loan = loans::create($validated);
 
-        return response()->json($loan, 201);
+        } catch (\Throwable $th) {
+            return response()->json(['error' => $th->getMessage()], 500);
+        }
+
+        // $loan = loans::create($validated);
+
+        // return response()->json($loan, 201);
     }
 
     /**
