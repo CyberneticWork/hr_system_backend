@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\loans;
+use App\Models\Loans;
 use App\Models\employee;
 use Illuminate\Validation\Rule;
 
