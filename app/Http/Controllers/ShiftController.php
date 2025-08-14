@@ -30,9 +30,8 @@ class ShiftController extends Controller
             'morning_ot_start' => 'required|date_format:H:i',
             'special_ot_start' => 'required|date_format:H:i',
             'late_deduction' => 'required|date_format:H:i',
-            'midnight_roster' => 'required|boolean',
             'nopay_hour_halfday' => 'required|numeric|min:0',
-            'break_time' => 'required|numeric|min:0',
+            'break_time' => 'numeric',
 
         ]);
 
@@ -83,7 +82,7 @@ class ShiftController extends Controller
     public function update(Request $request, string $id)
     {
         $validator = Validator::make($request->all(), [
-           
+
             'shift_description' => 'required|string|max:255',
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i',
@@ -93,7 +92,7 @@ class ShiftController extends Controller
             'midnight_roster' => 'required|boolean',
             'nopay_hour_halfday' => 'required|numeric|min:0',
             'break_time' => 'required|numeric|min:0',
-            
+
         ]);
 
         if ($validator->fails()) {
