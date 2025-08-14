@@ -233,8 +233,8 @@ class EmployeeController extends Controller
 
             $organizationValidator = Validator::make($organization, [
                 'company' => 'required|string',
-                'department' => 'required|string',
-                'subDepartment' => 'required|string',
+                'department' => 'nullable|string',
+                'subDepartment' => 'nullable|string',
                 'currentSupervisor' => 'nullable|string|max:100',
                 'dateOfJoined' => 'required|date',
                 'designation' => 'required|string|max:100',
