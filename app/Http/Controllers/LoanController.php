@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Loans;
+use App\Models\loans;
 use App\Models\employee;
 use Illuminate\Validation\Rule;
 
@@ -22,15 +22,28 @@ class LoanController extends Controller
      */
     public function store(Request $request)
     {
-        // Map camelCase to snake_case if the client sends employeeId
-        if ($request->filled('employeeId') && !$request->filled('employee_id')) {
-            $request->merge(['employee_id' => $request->input('employeeId')]);
+        // Map and normalize employee id
+        $incomingId = $request->filled('employeeId')
+            ? $request->input('employeeId')
+            : $request->input('employee_id');
+
+        if ($incomingId !== null) {
+            $request->merge([
+                'employee_id' => (int) trim((string) $incomingId),
+            ]);
         }
+
+        // Use model to resolve table and PK, avoids hardcoding and connection issues
+        $employeeModel = new employee();
+        $employeeTable = $employeeModel->getTable();
+        $employeeKey = $employeeModel->getKeyName();
 
         $validated = $request->validate([
             'employee_id' => [
                 'required',
-                Rule::exists('employees', 'id')->whereNull('deleted_at'), // remove whereNull if you want to allow soft-deleted
+                'integer',
+                // If you want to include soft-deleted employees, remove ->whereNull('deleted_at')
+                Rule::exists($employeeTable, $employeeKey)->whereNull('deleted_at'),
             ],
             'loan_id' => 'required|string|unique:loans,loan_id',
             'loan_amount' => ['required', 'numeric', 'min:0'],
@@ -43,13 +56,10 @@ class LoanController extends Controller
 
         try {
             $loan = loans::create($validated);
+            return response()->json($loan, 201);
         } catch (\Throwable $th) {
             return response()->json(['error' => $th->getMessage()], 500);
         }
-
-        // $loan = loans::create($validated);
-
-        // return response()->json($loan, 201);
     }
 
     /**
@@ -65,16 +75,14 @@ class LoanController extends Controller
      * Update the specified resource in storage.
      */
     public function update(Request $request, string $id)
-    {
-        //
+    { /* ... */
     }
 
     /**
      * Remove the specified resource from storage.
      */
     public function destroy(string $id)
-    {
-        //
+    { /* ... */
     }
 
     /**
