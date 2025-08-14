@@ -131,8 +131,8 @@ class EmployeeController extends Controller
             // Validate personal data
             $personalValidator = Validator::make($personal, [
                 'title' => 'required|string|max:10',
-                'attendanceEmpNo' => 'required|string|max:50',
-                'epfNo' => 'required|string|max:50',
+                'attendanceEmpNo' => 'required|string|max:50|unique:employees,attendance_employee_no',
+                'epfNo' => 'required|string|max:50|unique:employees,epf',
                 'nicNumber' => [
                     'required',
                     'string',
