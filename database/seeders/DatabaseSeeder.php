@@ -30,11 +30,37 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
 
-        User::create([
-            'name' => 'Isuru Bandara',
-            'email' => 'isuru@mail.com',
-            'password' => '123456789',
-            'role' => 'admin',
+        User::insert([
+            [
+                'name' => 'Isuru Bandara',
+                'email' => 'isuru@mail.com',
+                'password' => '123456789',
+                'role' => 'admin',
+            ],
+            [
+                'name' => 'Pawani Madhubashini',
+                'email' => 'pawani@mail.com',
+                'password' => '123456789',
+                'role' => 'admin',
+            ],
+            [
+                'name' => 'Eshan Dananjaya',
+                'email' => 'eshan@mail.com',
+                'password' => '123456789',
+                'role' => 'admin',
+            ],
+            [
+                'name' => 'Janitha Sandaruwan',
+                'email' => 'janitha@mail.com',
+                'password' => '123456789',
+                'role' => 'admin',
+            ],
+            [
+                'name' => 'Thushara Kumara',
+                'email' => 'thushara@mail.com',
+                'password' => '123456789',
+                'role' => 'admin',
+            ],
         ]);
 
         employment_type::insert([
