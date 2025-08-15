@@ -30,7 +30,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
 
-        User::insert([
+        User::create([
             [
                 'name' => 'Isuru Bandara',
                 'email' => 'isuru@mail.com',
