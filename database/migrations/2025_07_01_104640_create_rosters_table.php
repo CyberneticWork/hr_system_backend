@@ -17,10 +17,10 @@ return new class extends Migration {
             $table->foreignId('shift_code')->constrained('shifts')->onDelete('cascade');
 
             //Organizational hierarchy for assignment scope
-            $table->foreignId('company_id')->constrained('companies')->onDelete('cascade')->nullable();
-            $table->foreignId('department_id')->constrained('departments')->onDelete('cascade')->nullable();
-            $table->foreignId('sub_department_id')->constrained('sub_departments')->onDelete('cascade')->nullable();
-            $table->foreignId('employee_id')->constrained('employees')->onDelete('cascade')->nullable();
+            $table->foreignId('company_id')->nullable()->constrained('companies')->onDelete('cascade');
+            $table->foreignId('department_id')->nullable()->constrained('departments')->onDelete('cascade');
+            $table->foreignId('sub_department_id')->nullable()->constrained('sub_departments')->onDelete('cascade');
+            $table->foreignId('employee_id')->nullable()->constrained('employees')->onDelete('cascade');
 
             $table->boolean('is_recurring')->default(true);
             $table->string('recurrence_pattern')->nullable(); // e.g., daily, weekly, monthly
