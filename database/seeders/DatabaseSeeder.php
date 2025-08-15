@@ -181,7 +181,7 @@ class DatabaseSeeder extends Seeder
             // DeductionSeeder::class,
         ]);
 
-        // $employees = employee::all();
+        $employees = employee::all();
 
         // Sri Lankan banks for realism
         $banks = [
@@ -207,66 +207,66 @@ class DatabaseSeeder extends Seeder
             ['name' => 'Ratnapura Branch', 'code' => '008'],
         ];
 
-        // foreach ($employees as $employee) {
-        //     // Determine base salary based on company and position
-        //     $companyId = $employee->organizationAssignment->company_id;
+        foreach ($employees as $employee) {
+            // Determine base salary based on company and position
+            $companyId = $employee->organizationAssignment->company_id;
 
-        //     // Salary ranges based on company (ABC and XYZ pay more)
-        //     if ($companyId == 1 || $companyId == 2) {
-        //         $baseSalary = rand(60000, 250000); // 60k to 250k LKR
-        //     } else {
-        //         $baseSalary = rand(40000, 180000); // 40k to 180k LKR
-        //     }
+            // Salary ranges based on company (ABC and XYZ pay more)
+            if ($companyId == 1 || $companyId == 2) {
+                $baseSalary = rand(60000, 250000); // 60k to 250k LKR
+            } else {
+                $baseSalary = rand(40000, 180000); // 40k to 180k LKR
+            }
 
-        //     // Adjust salary based on years of service
-        //     $joiningDate = Carbon::parse($employee->organizationAssignment->date_of_joining);
-        //     $yearsOfService = $joiningDate->diffInYears(Carbon::now());
+            // Adjust salary based on years of service
+            $joiningDate = Carbon::parse($employee->organizationAssignment->date_of_joining);
+            $yearsOfService = $joiningDate->diffInYears(Carbon::now());
 
-        //     if ($yearsOfService > 0) {
-        //         $incrementPercentage = min(50, $yearsOfService * 5); // Max 50% increment
-        //         $baseSalary = $baseSalary * (1 + ($incrementPercentage / 100));
-        //     }
+            if ($yearsOfService > 0) {
+                $incrementPercentage = min(50, $yearsOfService * 5); // Max 50% increment
+                $baseSalary = $baseSalary * (1 + ($incrementPercentage / 100));
+            }
 
-        //     // Round to nearest 1000
-        //     $baseSalary = round($baseSalary / 1000) * 1000;
+            // Round to nearest 1000
+            $baseSalary = round($baseSalary / 1000) * 1000;
 
-        //     // Determine if employee is eligible for increment
-        //     $isEligibleForIncrement = rand(0, 1) && $yearsOfService > 1;
+            // Determine if employee is eligible for increment
+            $isEligibleForIncrement = rand(0, 1) && $yearsOfService > 1;
 
-        //     // Random bank details
-        //     $bank = $banks[array_rand($banks)];
-        //     $branch = $branches[array_rand($branches)];
+            // Random bank details
+            $bank = $banks[array_rand($banks)];
+            $branch = $branches[array_rand($branches)];
 
-        //     compensation::create([
-        //         'employee_id' => $employee->id,
-        //         'basic_salary' => $baseSalary,
-        //         'increment_value' => $isEligibleForIncrement ? rand(5, 15) . '%' : null,
-        //         'increment_effected_date' => $isEligibleForIncrement ? Carbon::now()->subMonths(rand(1, 11))->format('Y-m-d') : null,
+            compensation::create([
+                'employee_id' => $employee->id,
+                'basic_salary' => $baseSalary,
+                'increment_value' => $isEligibleForIncrement ? rand(5, 15) . '%' : null,
+                'increment_effected_date' => $isEligibleForIncrement ? Carbon::now()->subMonths(rand(1, 11))->format('Y-m-d') : null,
 
-        //         'enable_epf_etf' => rand(0, 1),
-        //         'ot_active' => rand(0, 1),
-        //         'early_deduction' => rand(0, 1),
-        //         'increment_active' => $isEligibleForIncrement,
-        //         'active_nopay' => rand(0, 1) ? true : false,
-        //         'ot_morning' => rand(0, 1),
-        //         'ot_evening' => rand(0, 1),
-        //         'ot_morning_rate' => rand(20, 100),
-        //         'ot_night_rate' => rand(20, 100),
+                'enable_epf_etf' => rand(0, 1),
+                'ot_active' => rand(0, 1),
+                'early_deduction' => rand(0, 1),
+                'increment_active' => $isEligibleForIncrement,
+                'active_nopay' => rand(0, 1) ? true : false,
+                'ot_morning' => rand(0, 1),
+                'ot_evening' => rand(0, 1),
+                'ot_morning_rate' => rand(20, 100),
+                'ot_night_rate' => rand(20, 100),
 
-        //         'bank_name' => $bank['name'],
-        //         'branch_name' => $branch['name'],
-        //         'bank_code' => $bank['code'],
-        //         'branch_code' => $branch['code'],
-        //         'bank_account_no' => '10' . rand(100000000, 999999999),
+                'bank_name' => $bank['name'],
+                'branch_name' => $branch['name'],
+                'bank_code' => $bank['code'],
+                'branch_code' => $branch['code'],
+                'bank_account_no' => '10' . rand(100000000, 999999999),
 
-        //         'br1' => rand(0, 1),
-        //         'br2' => rand(0, 1),
+                'br1' => rand(0, 1),
+                'br2' => rand(0, 1),
 
-        //         'comments' => rand(0, 1) ? 'Regular employee with standard benefits' : null,
-        //         'secondary_emp' => rand(0, 1) ? true : false,
-        //         'primary_emp_basic' => rand(0, 1) ? true : false,
-        //     ]);
-        // }
+                'comments' => rand(0, 1) ? 'Regular employee with standard benefits' : null,
+                'secondary_emp' => rand(0, 1) ? true : false,
+                'primary_emp_basic' => rand(0, 1) ? true : false,
+            ]);
+        }
 
 
 
