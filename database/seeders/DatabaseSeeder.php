@@ -30,7 +30,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
 
-        User::create([
+        $users = [
             [
                 'name' => 'Isuru Bandara',
                 'email' => 'isuru@mail.com',
@@ -61,7 +61,11 @@ class DatabaseSeeder extends Seeder
                 'password' => '123456789',
                 'role' => 'admin',
             ],
-        ]);
+        ];
+
+        foreach ($users as $userData) {
+            User::create($userData);
+        }
 
         employment_type::insert([
             [
