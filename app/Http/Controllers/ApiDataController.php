@@ -117,6 +117,21 @@ class ApiDataController extends Controller
         return response()->json($employees, 200);
     }
 
+    public function employeesByCompany($id)
+    {
+        $company = company::find($id);
+        if (!$company) {
+            return response()->json(['message' => 'Company not found'], 404);
+        }
+
+        $employees = employee::where('is_active', 1)
+            ->whereHas('organizationAssignment', function ($query) use ($id) {
+                $query->where('company_id', $id);
+            })->get(['id', 'full_name', 'attendance_employee_no', 'epf', 'nic']);
+
+        return response()->json($employees, 200);
+    }
+
     public function Absentees()
     {
         $employeeIdsWithRosters = employee::whereHas('rosters')->pluck('id')->toArray();
