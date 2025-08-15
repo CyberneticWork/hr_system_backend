@@ -424,7 +424,7 @@ class EmployeeController extends Controller
                 'employee_id' => $employee->id,
                 'basic_salary' => $compensation['basicSalary'],
                 'increment_value' => $compensation['incrementValue'] ?? null,
-                'increment_effected_date' => $compensation['incrementEffectiveFrom'] ?? null,
+                'increment_effected_date' => empty($organization['incrementEffectiveFrom']) ? null : $organization['incrementEffectiveFrom'],
                 'bank_name' => $compensation['bankName'] ?? null,
                 'branch_name' => $compensation['branchName'] ?? null,
                 'bank_code' => $compensation['bankCode'] ?? null,
